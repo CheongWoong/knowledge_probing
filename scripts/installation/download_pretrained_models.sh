@@ -1,0 +1,1 @@
+nohup python -m src.installation.download_pretrained_models > "logs/log.download_pretrained_models" &

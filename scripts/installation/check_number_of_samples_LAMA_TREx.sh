@@ -1,0 +1,1 @@
+python -m src.installation.check_number_of_samples_LAMA_TREx
