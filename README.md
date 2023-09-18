@@ -65,7 +65,9 @@ To be released soon.
 
 ### In-context Learning
 The following script generates the test data with demonstrations (few-shot prompts).
-
+```
+bash scripts/factual_knowledge_probing/generate_few_shot_prompts.sh
+```
 
 ## DeepSpeed Issues
 We tried disabling P2P to resolve the hanging issues of DeepSpeed.
