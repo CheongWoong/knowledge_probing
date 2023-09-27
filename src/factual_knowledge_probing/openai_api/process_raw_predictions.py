@@ -9,7 +9,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--file_path', type=str)
 args = parser.parse_args()
 
-with open('data/LAMA_TREx/all.json', 'r') as fin:
+dataset_name="LAMA_TREx"
+
+with open(os.path.join('data', dataset_name, 'all.json')) as fin:
     data = json.load(fin)
 
 rel_map = {}

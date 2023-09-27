@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 from transformers import AutoTokenizer
 
-from ..utils.text_processing import text_normalization_without_lemmatization
+from src.utils.common.text_processing import text_normalization_without_lemmatization
 
 
 if __name__ == '__main__':

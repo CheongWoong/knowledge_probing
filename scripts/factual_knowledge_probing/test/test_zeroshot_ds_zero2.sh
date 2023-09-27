@@ -1,12 +1,16 @@
-out_dir=$1
+model_name_or_path=$1
 dataset_type=$2
+model_name=$(basename $model_name_or_path)
+dataset_name="LAMA_TREx"
+out_dir=$model_name"_"$dataset_name"_zeroshot"
+ds_zero_stage=2
 
 nohup deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
-    --deepspeed src/utils/ds_config_zero3.json \
-    --model_name_or_path $out_dir \
+    --deepspeed "scripts/factual_knowledge_probing/ds_config_zero"$ds_zero_stage".json" \
+    --model_name_or_path $model_name_or_path \
     --do_train False \
     --do_eval True \
-    --validation_file "./data/LAMA_TREx/"$dataset_type".json" \
+    --validation_file "./data/"$dataset_name"/"$dataset_type".json" \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 32 \
     --gradient_accumulation_steps 1 \
@@ -18,6 +22,6 @@ nohup deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
     --save_strategy no \
     --seed 0 \
     --report_to tensorboard \
-    --output_dir $out_dir \
+    --output_dir "results/"$out_dir \
     --truncated_prompt True \
-    > $out_dir/eval_LAMA_TREx_$dataset_type.log &
+    > "results/logs/log."$out_dir".test_"$dataset_name"_"$dataset_type &

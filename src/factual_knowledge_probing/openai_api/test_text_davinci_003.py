@@ -26,7 +26,9 @@ for stopword_id in stopword_ids:
     logit_bias_remove_stopwords[str(stopword_id)] = -100
 
 
-with open('data/LAMA_TREx/test.json') as fin:
+dataset_name="LAMA_TREx"
+
+with open(os.path.join('data', dataset_name, 'test.json')) as fin:
     test_data = json.load(fin)
 
 uids = []

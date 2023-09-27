@@ -27,6 +27,7 @@ import logging
 import math
 import os
 import sys
+import warnings
 from dataclasses import dataclass, field
 from itertools import chain
 from typing import Optional
@@ -56,11 +57,13 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
+from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderConfig ## cwkang: add peft modules
 
 ##### cwkang: load additional packages and define global variables
-from src.utils.arguments import ModelArguments, DataTrainingArguments
-from src.utils.utils import smart_tokenizer_and_embedding_resize
-from src.utils.utils_factual_knowledge_probing import SupervisedDataset, DataCollatorForSupervisedDataset, preprocess_logits_for_metrics, postprocess_predictions
+from src.utils.common.arguments import ModelArguments, DataTrainingArguments
+from src.utils.common.tokenizer_utils import smart_tokenizer_and_embedding_resize
+from src.utils.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
+from src.utils.evaluation import preprocess_logits_for_metrics, postprocess_predictions
 
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
@@ -70,7 +73,7 @@ DEFAULT_UNK_TOKEN = "<unk>"
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-check_min_version("4.27.0")
+check_min_version("4.33.0")
 
 require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/language-modeling/requirements.txt")
 
@@ -104,8 +107,15 @@ def main():
             raise argparse.ArgumentTypeError('Boolean value expected.')
     custom_parser = argparse.ArgumentParser()
     custom_parser.add_argument('--truncated_prompt', type=str2bool, default=True)
+    custom_parser.add_argument('--prompt_tuning', type=str2bool, default=False)
     custom_args = custom_parser.parse_args(remaining_args)
     #####
+
+    if model_args.use_auth_token is not None:
+        warnings.warn("The `use_auth_token` argument is deprecated and will be removed in v4.34.", FutureWarning)
+        if model_args.token is not None:
+            raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
+        model_args.token = model_args.use_auth_token
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -132,7 +142,7 @@ def main():
     # Log on each process the small summary:
     logger.warning(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        + f"distributed training: {training_args.parallel_mode.value == 'distributed'}, 16-bits training: {training_args.fp16}"
     )
     logger.info(f"Training/evaluation parameters {training_args}")
 
@@ -169,7 +179,7 @@ def main():
             data_args.dataset_name,
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
-            use_auth_token=True if model_args.use_auth_token else None,
+            token=model_args.token,
             streaming=data_args.streaming,
         )
         if "validation" not in raw_datasets.keys():
@@ -178,7 +188,7 @@ def main():
                 data_args.dataset_config_name,
                 split=f"train[:{data_args.validation_split_percentage}%]",
                 cache_dir=model_args.cache_dir,
-                use_auth_token=True if model_args.use_auth_token else None,
+                token=model_args.token,
                 streaming=data_args.streaming,
             )
             raw_datasets["train"] = load_dataset(
@@ -186,7 +196,7 @@ def main():
                 data_args.dataset_config_name,
                 split=f"train[{data_args.validation_split_percentage}%:]",
                 cache_dir=model_args.cache_dir,
-                use_auth_token=True if model_args.use_auth_token else None,
+                token=model_args.token,
                 streaming=data_args.streaming,
             )
     else:
@@ -208,7 +218,7 @@ def main():
             extension,
             data_files=data_files,
             cache_dir=model_args.cache_dir,
-            use_auth_token=True if model_args.use_auth_token else None,
+            token=model_args.token,
             **dataset_args,
         )
         # If no validation data is there, validation_split_percentage will be used to divide the dataset.
@@ -218,7 +228,7 @@ def main():
                 data_files=data_files,
                 split=f"train[:{data_args.validation_split_percentage}%]",
                 cache_dir=model_args.cache_dir,
-                use_auth_token=True if model_args.use_auth_token else None,
+                token=model_args.token,
                 **dataset_args,
             )
             raw_datasets["train"] = load_dataset(
@@ -226,7 +236,7 @@ def main():
                 data_files=data_files,
                 split=f"train[{data_args.validation_split_percentage}%:]",
                 cache_dir=model_args.cache_dir,
-                use_auth_token=True if model_args.use_auth_token else None,
+                token=model_args.token,
                 **dataset_args,
             )
 
@@ -239,10 +249,18 @@ def main():
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
 
+    # Load peft model for inference
+    if custom_args.prompt_tuning:
+        if not training_args.do_train:
+            peft_model_id = model_args.model_name_or_path
+            config = PeftConfig.from_pretrained(peft_model_id)
+            model_args.model_name_or_path = config.base_model_name_or_path
+
     config_kwargs = {
         "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
-        "use_auth_token": True if model_args.use_auth_token else None,
+        "token": model_args.token,
+        "trust_remote_code": model_args.trust_remote_code,
     }
     if model_args.config_name:
         config = AutoConfig.from_pretrained(model_args.config_name, **config_kwargs)
@@ -260,7 +278,8 @@ def main():
         "cache_dir": model_args.cache_dir,
         "use_fast": model_args.use_fast_tokenizer,
         "revision": model_args.model_revision,
-        "use_auth_token": True if model_args.use_auth_token else None,
+        "token": model_args.token,
+        "trust_remote_code": model_args.trust_remote_code,
     }
     if model_args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, **tokenizer_kwargs)
@@ -284,19 +303,15 @@ def main():
             config=config,
             cache_dir=model_args.cache_dir,
             revision=model_args.model_revision,
-            use_auth_token=True if model_args.use_auth_token else None,
+            token=model_args.token,
+            trust_remote_code=model_args.trust_remote_code,
             torch_dtype=torch_dtype,
+            low_cpu_mem_usage=model_args.low_cpu_mem_usage,
         )
     else:
-        model = AutoModelForCausalLM.from_config(config)
+        model = AutoModelForCausalLM.from_config(config, trust_remote_code=model_args.trust_remote_code)
         n_params = sum({p.data_ptr(): p.numel() for p in model.parameters()}.values())
         logger.info(f"Training new model from scratch - Total size={n_params/2**20:.2f}M params")
-
-    # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
-    # on a small vocab and want a smaller embedding size, remove this test.
-    embedding_size = model.get_input_embeddings().weight.shape[0]
-    if len(tokenizer) > embedding_size:
-        model.resize_token_embeddings(len(tokenizer))
 
     ##### cwkang: add default special tokens and initialize as the mean of all embeddings.
     special_tokens_dict = dict()
@@ -315,6 +330,21 @@ def main():
             model=model,
         )
     #####
+
+    # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
+    # on a small vocab and want a smaller embedding size, remove this test.
+    embedding_size = model.get_input_embeddings().weight.shape[0]
+    if len(tokenizer) > embedding_size:
+        model.resize_token_embeddings(len(tokenizer))
+
+    ## cwkang: add peft config and model
+    if custom_args.prompt_tuning:
+        if training_args.do_train:
+            peft_config = PromptEncoderConfig(task_type=TaskType.CAUSAL_LM, num_virtual_tokens=8, encoder_hidden_size=128)
+            model = get_peft_model(model, peft_config)
+            print(model.print_trainable_parameters())
+        else:
+            model = PeftModel.from_pretrained(model, peft_model_id)
 
     # # Preprocessing the datasets.
     # # First we tokenize all the texts.
@@ -372,23 +402,14 @@ def main():
             )
         block_size = min(data_args.block_size, tokenizer.model_max_length)
 
-    ##### cwkang: create the datasets and collator.
-    if 'train' in raw_datasets:
-        train_dataset = SupervisedDataset(raw_datasets['train'], tokenizer, block_size, custom_args.truncated_prompt)
-    if 'validation' in raw_datasets:
-        eval_dataset = SupervisedDataset(raw_datasets['validation'], tokenizer, block_size, custom_args.truncated_prompt)
-    data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
-    #####
-
     # # Main data processing function that will concatenate all texts from our dataset and generate chunks of block_size.
     # def group_texts(examples):
     #     # Concatenate all texts.
     #     concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
     #     total_length = len(concatenated_examples[list(examples.keys())[0]])
-    #     # We drop the small remainder, we could add padding if the model supported it instead of this drop, you can
-    #     # customize this part to your needs.
-    #     if total_length >= block_size:
-    #         total_length = (total_length // block_size) * block_size
+    #     # We drop the small remainder, and if the total_length < block_size  we exclude this batch and return an empty dict.
+    #     # We could add padding if the model supported it instead of this drop, you can customize this part to your needs.
+    #     total_length = (total_length // block_size) * block_size
     #     # Split by chunks of max_len.
     #     result = {
     #         k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
@@ -418,6 +439,14 @@ def main():
     #             group_texts,
     #             batched=True,
     #         )
+
+    ##### cwkang: create the datasets and collator.
+    if 'train' in raw_datasets:
+        train_dataset = SupervisedDataset(raw_datasets['train'], tokenizer, block_size, custom_args.truncated_prompt)
+    if 'validation' in raw_datasets:
+        eval_dataset = SupervisedDataset(raw_datasets['validation'], tokenizer, block_size, custom_args.truncated_prompt)
+    data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
+    #####
 
     if training_args.do_train:
         # if "train" not in tokenized_datasets:
@@ -499,7 +528,7 @@ def main():
         ##### cw: we manually do the evaluation here.
         results = trainer.predict(eval_dataset)
         metrics = results.metrics
-        postprocess_predictions(results, raw_datasets['validation'], data_args.validation_file, training_args.output_dir, tokenizer)
+        postprocess_predictions(results.predictions, results.label_ids, raw_datasets['validation'], data_args.validation_file, training_args.output_dir, tokenizer)
         #####
 
         max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(eval_dataset)

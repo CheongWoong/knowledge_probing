@@ -1,4 +1,4 @@
-from transformers import AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 if __name__ == '__main__':
@@ -7,4 +7,6 @@ if __name__ == '__main__':
     model_paths = output_paths
     for model_path, output_path in zip(model_paths, output_paths):
         model = AutoModelForCausalLM.from_pretrained(model_path)
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
         model.save_pretrained(output_path)
+        tokenizer.save_pretrained(output_path)

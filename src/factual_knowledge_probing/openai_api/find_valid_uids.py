@@ -11,14 +11,16 @@ from tqdm.auto import tqdm
 target_model2 = 'gpt-3.5-turbo'
 encoding2 = tiktoken.encoding_for_model(target_model2)
 
-with open('data/LAMA_TREx/test.json') as fin:
-    test_data = json.load(fin)
+dataset_name="LAMA_TREx"
+
+with open(os.path.join('data', dataset_name, 'all.json')) as fin:
+    data = json.load(fin)
 
 
 valid_uids = []
 
 count, count2 = 0, 0
-for example in tqdm(test_data):
+for example in tqdm(data):
     uid = example['uid']
     prompt = example['truncated_input']
     obj = example['output']

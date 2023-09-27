@@ -1,13 +1,16 @@
-model_name_or_path=results/gpt_j_6B
-out_dir=gpt_j_6B_TREx
+model_name_or_path=$1
+dataset_type=$2
+model_name=$(basename $model_name_or_path)
+dataset_name="LAMA_TREx"
+out_dir=$model_name
+ds_zero_stage=3
 
 nohup deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
-    --deepspeed src/utils/ds_config_zero3.json \
+    --deepspeed "scripts/factual_knowledge_probing/ds_config_zero"$ds_zero_stage".json" \
     --model_name_or_path $model_name_or_path \
-    --do_train True \
+    --do_train False \
     --do_eval True \
-    --train_file "./data/LAMA_TREx/train.json" \
-    --validation_file "./data/LAMA_TREx/test.json" \
+    --validation_file "./data/"$dataset_name"/"$dataset_type".json" \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 32 \
     --gradient_accumulation_steps 1 \
@@ -19,6 +22,6 @@ nohup deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
     --save_strategy no \
     --seed 0 \
     --report_to tensorboard \
-    --output_dir results/$out_dir \
+    --output_dir "results/"$out_dir \
     --truncated_prompt False \
-    > results/log_finetuning.$out_dir &
+    > "results/logs/log."$out_dir".test_"$dataset_name"_"$dataset_type &
