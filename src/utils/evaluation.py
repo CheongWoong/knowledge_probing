@@ -22,7 +22,8 @@ def preprocess_logits_for_metrics(logits, labels):
     mask = torch.zeros(labels[:, 1:].shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
     logits = logits[:, -(mask.shape[1]+1):] ## cw: to match the shape (the input length is expanded when usnig prompt tuning methods)
     logits = logits[:, :-1][mask] ## get the logits at the label (obj) index.
-    return logits.detach().cpu()
+    # return logits.detach().cpu()
+    return logits ## keep logits on gpu for errors in the multi-gpu setting.
     #####
 
 def get_masks(tokenizer, f_all):
