@@ -10,7 +10,7 @@ deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
     --deepspeed "scripts/factual_knowledge_probing/ds_config_zero"$ds_zero_stage".json" \
     --model_name_or_path $model_name_or_path \
     --do_train True \
-    --do_eval True \
+    --do_eval False \
     --train_file "./data/"$dataset_name"/train_relation_wise/"$rel_id".json" \
     --validation_file "./data/"$dataset_name"/test_relation_wise/"$rel_id".json" \
     --per_device_train_batch_size 32 \
