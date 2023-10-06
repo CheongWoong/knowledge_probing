@@ -19,12 +19,12 @@ for fname in os.listdir(data_path):
 aggregated_preds = []
 
 for rel_id in rel_ids:
-    with open(os.path.join(args.file_path, rel_id, 'pred_'+args.dataset_type+'_relation_wise_'+rel_id+'.json'), 'r') as fin:
+    with open(os.path.join(args.file_path, rel_id, f'pred_{args.dataset_type}_relation_wise_{rel_id}.json'), 'r') as fin:
         preds = json.load(fin)
 
     for pred in preds:
         aggregated_preds.append(pred)
 
 # Save the aggregated predictions.
-with open(os.path.join(args.file_path, 'pred_'+args.dataset_name+'_'+args.dataset_type+'.json'), 'w') as fout:
+with open(os.path.join(args.file_path, f'pred_{args.dataset_name}_{args.dataset_type}.json'), 'w') as fout:
     json.dump(aggregated_preds, fout)

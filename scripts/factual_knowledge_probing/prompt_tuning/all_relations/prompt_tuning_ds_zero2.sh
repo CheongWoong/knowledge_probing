@@ -7,6 +7,6 @@ do
     rel_id="${filename%.*}"
 
     if [ "$rel_id" != "all" ]; then
-        bash scripts/factual_knowledge_probing/prompt_tuning/single_relation/prompt_tuning_ds_zero3.sh $model_name_or_path $rel_id
+        bash scripts/factual_knowledge_probing/prompt_tuning/single_relation/prompt_tuning_ds_zero2.sh $model_name_or_path $rel_id
     fi
 done

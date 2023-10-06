@@ -47,7 +47,7 @@ def get_masks(tokenizer, f_all):
         obj = example['output']
         obj_id = tokenizer.encode(' '+obj)[0]
         gold_obj_relation_wise_ids[rel].add(obj_id)
-        subj_rel_pair_gold_obj_ids[subj+'_'+rel].add(obj_id)
+        subj_rel_pair_gold_obj_ids[f'{subj}_{rel}'].add(obj_id)
         gold_obj_ids.add(obj_id)
 
     ## compute negated ids (== words that are not gold objects)
@@ -148,15 +148,15 @@ def postprocess_predictions(predictions, label_ids, validation_dataset, validati
         for key in postprocessed_results:
             postprocessed_results_aggregated[key] = postprocessed_results[key]
         for key in postprocessed_results_remove_stopwords:
-            postprocessed_results_aggregated[key+"_remove_stopwords"] = postprocessed_results_remove_stopwords[key]
+            postprocessed_results_aggregated[f"{key}_remove_stopwords"] = postprocessed_results_remove_stopwords[key]
         for key in postprocessed_results_gold_objs:
-            postprocessed_results_aggregated[key+"_gold_objs"] = postprocessed_results_gold_objs[key]
+            postprocessed_results_aggregated[f"{key}_gold_objs"] = postprocessed_results_gold_objs[key]
         for key in postprocessed_results_gold_objs_relation_wise:
-            postprocessed_results_aggregated[key+"_gold_objs_relation_wise"] = postprocessed_results_gold_objs_relation_wise[key]
+            postprocessed_results_aggregated[f"{key}_gold_objs_relation_wise"] = postprocessed_results_gold_objs_relation_wise[key]
     
         predictions_output.append(postprocessed_results_aggregated)
 
     basename = os.path.basename(validation_file_path)
     dataset_name = os.path.basename(os.path.dirname(validation_file_path))
-    with open(os.path.join(output_dir, "pred_"+dataset_name+"_"+basename), "w") as fout:
+    with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}"), "w") as fout:
         json.dump(predictions_output, fout)

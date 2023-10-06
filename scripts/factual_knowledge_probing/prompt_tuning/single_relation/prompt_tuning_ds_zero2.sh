@@ -4,13 +4,13 @@ model_name=$(basename $model_name_or_path)
 dataset_name="LAMA_TREx"
 training_type="prompt_tuning"
 out_dir=$model_name"_"$dataset_name"_"$training_type
-ds_zero_stage=3
+ds_zero_stage=2
 
 deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
     --deepspeed "scripts/factual_knowledge_probing/ds_config_zero"$ds_zero_stage".json" \
     --model_name_or_path $model_name_or_path \
     --do_train True \
-    --do_eval False \
+    --do_eval True \
     --train_file "./data/"$dataset_name"/train_relation_wise/"$rel_id".json" \
     --validation_file "./data/"$dataset_name"/test_relation_wise/"$rel_id".json" \
     --per_device_train_batch_size 32 \
