@@ -1,4 +1,5 @@
 import os
+import argparse
 import openai
 import tiktoken
 
@@ -8,11 +9,15 @@ from tqdm.auto import tqdm
 from nltk.corpus import stopwords
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--target_model', type=str, default='gpt-3.5-turbo-0301')
+parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
+parser.add_argument('--dataset_type', type=str, default='test')
+args = parser.parse_args()
+
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-
-target_model = 'gpt-4-0314'
-encoding = tiktoken.encoding_for_model(target_model)
+encoding = tiktoken.encoding_for_model(args.target_model)
 
 stopword_list = stopwords.words("english")
 stopword_ids = []
@@ -28,10 +33,7 @@ logit_bias_remove_stopwords = {}
 for stopword_id in stopword_ids:
     logit_bias_remove_stopwords[str(stopword_id)] = -100
 
-
-dataset_name="LAMA_TREx"
-
-with open(os.path.join('data', dataset_name, 'test.json')) as fin:
+with open(os.path.join('data', args.dataset_name, f'{args.dataset_type}.json')) as fin:
     test_data = json.load(fin)
 
 uids = []
@@ -58,14 +60,14 @@ for i in tqdm(range(0, len(prompts), batch_size)):
     while True:
         try:
             responses = openai.ChatCompletion.create(
-				model=target_model,
+				model=args.target_model,
 				messages=messages,
 				max_tokens=1,
 				temperature=0,
 			)
 
             responses_remove_stopwords = openai.ChatCompletion.create(
-				model=target_model,
+				model=args.target_model,
 				messages=messages,
 				max_tokens=1,
 				temperature=0,
@@ -83,11 +85,11 @@ for i in tqdm(range(0, len(prompts), batch_size)):
         raw_predictions_remove_stopwords.append({"uid": uid, "response": response_remove_stopwords})
 
 
-out_path = os.path.join('results', target_model)
+out_path = os.path.join('results', args.target_model)
 os.makedirs(out_path, exist_ok=True)
 
-with open(os.path.join(out_path, 'raw_predictions.json'), 'w') as fout:
+with open(os.path.join(out_path, f'raw_pred_{args.dataset_name}_{args.dataset_type}.json'), 'w') as fout:
     json.dump(raw_predictions, fout)
 
-with open(os.path.join(out_path, 'raw_predictions_remove_stopwords.json'), 'w') as fout:
+with open(os.path.join(out_path, f'raw_pred_{args.dataset_name}_{args.dataset_type}_remove_stopwords.json'), 'w') as fout:
     json.dump(raw_predictions_remove_stopwords, fout)

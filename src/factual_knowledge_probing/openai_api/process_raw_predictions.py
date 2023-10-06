@@ -7,11 +7,11 @@ from tqdm.auto import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--file_path', type=str)
+parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
+parser.add_argument('--dataset_type', type=str, default='test')
 args = parser.parse_args()
 
-dataset_name="LAMA_TREx"
-
-with open(os.path.join('data', dataset_name, 'all.json')) as fin:
+with open(os.path.join('data', args.dataset_name, 'all.json')) as fin:
     data = json.load(fin)
 
 rel_map = {}
@@ -24,12 +24,12 @@ for instance in data:
     rel_map[uid] = rel_id
     label_map[uid] = label
 
-with open(os.path.join(args.file_path, 'raw_predictions.json'), 'r') as fin:
+with open(os.path.join(args.file_path, f'raw_pred_{args.dataset_name}_{args.dataset_type}.json'), 'r') as fin:
     raw_preds = json.load(fin)
-with open(os.path.join(args.file_path, 'raw_predictions_remove_stopwords.json'), 'r') as fin:
+with open(os.path.join(args.file_path, f'raw_pred_{args.dataset_name}_{args.dataset_type}_remove_stopwords.json'), 'r') as fin:
     raw_preds_remove_stopwords = json.load(fin)
 
-with open('src/openai_api/valid_uids.json', 'r') as fin:
+with open(f'src/factual_knowledge_probing/openai_api/{args.dataset_name}/valid_uids.json', 'r') as fin:
     valid_uids = json.load(fin)
 
 valid_predictions = []
@@ -61,7 +61,7 @@ for raw_pred, raw_pred_remove_stopwords in tqdm(zip(raw_preds, raw_preds_remove_
     if uid in valid_uids:
         valid_predictions.append(prediction)
 
-with open(os.path.join(args.file_path, 'pred.json'), 'w') as fout:
+with open(os.path.join(args.file_path, f'pred_{args.dataset_name}_{args.dataset_type}.json'), 'w') as fout:
     json.dump(predictions, fout)
-with open(os.path.join(args.file_path, 'pred_valid_only.json'), 'w') as fout:
+with open(os.path.join(args.file_path, f'pred_{args.dataset_name}_{args.dataset_type}_valid_only.json'), 'w') as fout:
     json.dump(valid_predictions, fout)

@@ -1,19 +1,21 @@
 import os
+import argparse
 import tiktoken
 
 import json
 from tqdm.auto import tqdm
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
+args = parser.parse_args()
 
 # target_model = 'text-davinci-003'
 # encoding = tiktoken.encoding_for_model(target_model)
 target_model2 = 'gpt-3.5-turbo'
 encoding2 = tiktoken.encoding_for_model(target_model2)
 
-dataset_name="LAMA_TREx"
-
-with open(os.path.join('data', dataset_name, 'all.json')) as fin:
+with open(os.path.join('data', args.dataset_name, 'all.json')) as fin:
     data = json.load(fin)
 
 
@@ -35,5 +37,7 @@ for example in tqdm(data):
 print(count, count2)
 
 file_directory = os.path.dirname(__file__)
-with open(os.path.join(file_directory, 'valid_uids.json'), 'w') as fout:
+out_dir = os.path.join(file_directory, args.dataset_name)
+os.makedirs(out_dir, exist_ok=True)
+with open(os.path.join(out_dir, 'valid_uids.json'), 'w') as fout:
     json.dump(valid_uids, fout)
