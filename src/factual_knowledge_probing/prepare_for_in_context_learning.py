@@ -9,12 +9,12 @@ import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', type=str)
+    parser.add_argument('--dataset_name', type=str)
     args = parser.parse_args()
 
-    with open(os.path.join(args.data_path, 'train.json'), 'r') as fin:
+    with open(f"data/{args.dataset_name}/train.json", 'r') as fin:
         f_train = json.load(fin)
-    with open(os.path.join(args.data_path, 'test.json'), 'r') as fin:
+    with open(f"data/{args.dataset_name}/test.json", 'r') as fin:
         f_test = json.load(fin)
 
     demonstrations = defaultdict(list)
@@ -32,5 +32,5 @@ if __name__ == '__main__':
         example['input'] = few_shot_examples + '\n' + example['input']
         example['truncated_input'] = few_shot_examples + '\n' + example['truncated_input']
         
-    with open(os.path.join(args.data_path, 'test_4_shot.json'), 'w') as fout:
+    with open(f"data/{args.dataset_name}/test_4_shot.json", 'w') as fout:
         json.dump(f_test, fout)

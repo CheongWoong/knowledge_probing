@@ -9,7 +9,7 @@ parser.add_argument('--dataset_type', type=str, choices=['test', 'train'])
 parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
 args = parser.parse_args()
 
-data_path = os.path.join('data', args.dataset_name, 'train_relation_wise')
+data_path = f'data/{args.dataset_name}/train_relation_wise'
 rel_ids = []
 for fname in os.listdir(data_path):
     rel_id = fname.split('.')[0]

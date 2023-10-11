@@ -11,7 +11,7 @@ parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
 parser.add_argument('--dataset_type', type=str, default='test')
 args = parser.parse_args()
 
-with open(os.path.join('data', args.dataset_name, 'all.json')) as fin:
+with open(f'data/{args.dataset_name}/all.json') as fin:
     data = json.load(fin)
 
 rel_map = {}

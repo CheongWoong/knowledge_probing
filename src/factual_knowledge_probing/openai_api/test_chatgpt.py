@@ -33,7 +33,7 @@ logit_bias_remove_stopwords = {}
 for stopword_id in stopword_ids:
     logit_bias_remove_stopwords[str(stopword_id)] = -100
 
-with open(os.path.join('data', args.dataset_name, f'{args.dataset_type}.json')) as fin:
+with open(f'data/{args.dataset_name}/{args.dataset_type}.json') as fin:
     test_data = json.load(fin)
 
 uids = []

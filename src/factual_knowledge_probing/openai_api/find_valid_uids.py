@@ -15,7 +15,7 @@ args = parser.parse_args()
 target_model2 = 'gpt-3.5-turbo'
 encoding2 = tiktoken.encoding_for_model(target_model2)
 
-with open(os.path.join('data', args.dataset_name, 'all.json')) as fin:
+with open(f'data/{args.dataset_name}/all.json') as fin:
     data = json.load(fin)
 
 
