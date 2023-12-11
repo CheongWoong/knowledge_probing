@@ -1,5 +1,5 @@
 # Factual Knowledge Probing with Autoregressive Language Models
-This is a repository for factual knowledge probing, which is part of the EMNLP 2023 Findings paper "[Impact of Co-occurrence on Factual Knowledge of Large Language Models](https://arxiv.org/abs/2310.08256)".  
+This is a repository for factual knowledge probing, which is part of the EMNLP 2023 Findings paper "[Impact of Co-occurrence on Factual Knowledge of Large Language Models](https://aclanthology.org/2023.findings-emnlp.518.pdf)".  
 
 <p align="center">
 <img src="https://github.com/CheongWoong/cheongwoong.github.io/blob/master/assets/img/impact_of_cooccurrence/factual_knowledge_probing_procedure.png"></img>
