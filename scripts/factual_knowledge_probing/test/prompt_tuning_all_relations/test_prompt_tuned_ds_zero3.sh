@@ -2,7 +2,7 @@ model_name_or_path=$1
 dataset_type=$2
 dataset_name="LAMA_TREx"
 
-for entry in "data/"$dataset_name"/"$dataset_type"_relation_wise/*.json"
+for entry in "data/"$dataset_name"/"$dataset_type"_relation_wise/"*.json
 do
     filename=$(basename $entry)
     rel_id="${filename%.*}"
