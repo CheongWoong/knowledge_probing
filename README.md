@@ -39,28 +39,29 @@ bash scripts/installation/download_pretrained_models.sh
 ## Evaluation
 
 ### Test
-The prediction file (e.g. 'pred_LAMA_TREX_test.json') is saved in 'results/{model_name_or_path}'.
+The prediction file (e.g. 'pred_{dataset_name}_test.json') is saved in 'results/{model_name_or_path}_{dataset_name}'.
 ```
-# Zero-shot test (optional: deepspeed)
-# model_name_or_path: ['results/gpt_neo_125M', 'results/gpt_j_6B', 'EleutherAI/pythia-6.9b-deduped', ...]
+# Zero-shot test
+# model_name_or_path: ['results/gpt_neo_125M', 'results/gpt_j_6B', 'meta-llama/Llama-2-7b-chat-hf', ...]
 # dataset_type: ['test', 'train', ...]
-bash scripts/factual_knowledge_probing/test/test_zeroshot.sh {model_name_or_path} {dataset_type}
-bash scripts/factual_knowledge_probing/test/test_zeroshot_ds_zero3.sh {model_name_or_path} {dataset_type}
+bash scripts/factual_knowledge_probing/test/test_zeroshot.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
+# Optional: run with deepspeed ZeRO-3
+bash scripts/factual_knowledge_probing/test/test_zeroshot_ds_zero3.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
 
 # Test finetuned models
-bash scripts/factual_knowledge_probing/test/test_finetuned.sh {model_name_or_path} {dataset_type}
+bash scripts/factual_knowledge_probing/test/test_finetuned.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
 
 # Test prompt-tuned models (Note that this script tests the model for every relation iteratively.)
-bash scripts/factual_knowledge_probing/test/test_prompt_tuned.sh {model_name_or_path} {dataset_type}
+bash scripts/factual_knowledge_probing/test/test_prompt_tuned.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
 # Aggregate predictions of prompt-tuned models
-bash scripts/factual_knowledge_probing/test/aggregate_predictions_for_prompt_tuning.sh {model_name_or_path} {dataset_type}
+bash scripts/factual_knowledge_probing/test/aggregate_predictions_for_prompt_tuning.sh {model_name_or_path} {dataset_name} {dataset_type}
 ```
 
 ### Compute Score
 This evaluation script computes score and saves the results in 'score_factual_probing_test.json'.
 ```
 # prediction_file: ['results/gpt_neo_125M_LAMA_TREx_finetuning/pred_LAMA_TREx_test.json', ...]
-bash scripts/test/compute_score.sh {prediction_file}
+bash scripts/test/compute_score.sh {prediction_file} {dataset_name}
 ```
 
 

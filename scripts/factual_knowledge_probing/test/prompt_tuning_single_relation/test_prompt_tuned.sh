@@ -1,12 +1,13 @@
-model_name_or_path=$1
-dataset_type=$2
-rel_id=$3
+model_type=$1
+model_name_or_path=$2
+dataset_name=$3
+dataset_type=$4
+rel_id=$5
 test_rel_id=$rel_id
 model_name=$(basename $model_name_or_path)
-dataset_name="LAMA_TREx"
 out_dir=$model_name
 
-python -m src.factual_knowledge_probing.run_factual_knowledge_probing \
+python -m "src.factual_knowledge_probing.run_"$model_type \
     --model_name_or_path $model_name_or_path"/"$rel_id \
     --do_train False \
     --do_eval True \

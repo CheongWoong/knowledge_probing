@@ -60,7 +60,7 @@ from transformers.utils.versions import require_version
 from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderConfig ## cwkang: add peft modules
 
 ##### cwkang: load additional packages and define global variables
-from src.utils.common.arguments import ModelArguments, DataTrainingArguments
+from src.utils.common.clm_arguments import ModelArguments, DataTrainingArguments
 from src.utils.common.tokenizer_utils import smart_tokenizer_and_embedding_resize
 from src.utils.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
 from src.utils.evaluation import preprocess_logits_for_metrics, postprocess_predictions

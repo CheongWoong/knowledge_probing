@@ -1,13 +1,14 @@
-model_name_or_path=$1
-dataset_type=$2
-rel_id=$3
+model_type=$1
+model_name_or_path=$2
+dataset_name=$3
+dataset_type=$4
+rel_id=$5
 test_rel_id=$rel_id
 model_name=$(basename $model_name_or_path)
-dataset_name="LAMA_TREx"
 out_dir=$model_name
 ds_zero_stage=3
 
-deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
+deepspeed "src/factual_knowledge_probing/run_"$model_type".py" \
     --deepspeed "scripts/factual_knowledge_probing/ds_config_zero"$ds_zero_stage".json" \
     --model_name_or_path $model_name_or_path"/"$rel_id \
     --do_train False \
