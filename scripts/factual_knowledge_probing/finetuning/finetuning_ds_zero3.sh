@@ -1,11 +1,12 @@
-model_name_or_path=$1
+model_type=$1
+model_name_or_path=$2
+dataset_name=$3
 model_name=$(basename $model_name_or_path)
-dataset_name="LAMA_TREx"
 training_type="finetuning"
 out_dir=$model_name"_"$dataset_name"_"$training_type
 ds_zero_stage=3
 
-nohup deepspeed src/factual_knowledge_probing/run_factual_knowledge_probing.py \
+nohup deepspeed "src/factual_knowledge_probing/run_"$model_type".py" \
     --deepspeed "scripts/factual_knowledge_probing/ds_config_zero"$ds_zero_stage".json" \
     --model_name_or_path $model_name_or_path \
     --do_train True \

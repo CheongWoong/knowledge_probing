@@ -1,4 +1,6 @@
-model_name_or_path=$1
+model_type=$1
+model_name_or_path=$2
+dataset_name=$3
 model_name=$(basename $model_name_or_path)
 training_type="prompt_tuning"
 
