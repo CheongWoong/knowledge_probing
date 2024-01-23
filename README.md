@@ -88,5 +88,5 @@ The following script generates the test data with demonstrations (few-shot promp
 Then, you can test the models with few-shot prompts.
 ```
 bash scripts/factual_knowledge_probing/in_context_learning/prepare_for_in_context_learning.sh {dataset_name}
-bash scripts/factual_knowledge_probing/test/test_zeroshot.sh {model_type} {model_name_or_path} {dataset_name} {model_name_or_path} test_4_shot
+bash scripts/factual_knowledge_probing/test/test_zeroshot.sh {model_type} {model_name_or_path} {dataset_name} test_4_shot
 ```
