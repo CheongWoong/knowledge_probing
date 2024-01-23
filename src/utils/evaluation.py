@@ -158,5 +158,5 @@ def postprocess_predictions(predictions, label_ids, validation_dataset, validati
 
     basename = os.path.basename(validation_file_path)
     dataset_name = os.path.basename(os.path.dirname(validation_file_path))
-    with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}"), "w") as fout:
+    with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}.json"), "w") as fout:
         json.dump(predictions_output, fout)
