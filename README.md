@@ -39,7 +39,7 @@ bash scripts/installation/download_pretrained_models.sh
 ## Evaluation
 
 ### Test
-The prediction file (e.g. 'pred_{dataset_name}_test.json') is saved in 'results/{model_name_or_path}_{dataset_name}'.
+The prediction file (e.g. 'pred_{dataset_name}\_test.json') is saved in 'results/{model_name_or_path}_{dataset_name}'.
 ```
 # Zero-shot test
 # model_type: ['clm', 'mlm']
