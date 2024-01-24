@@ -61,8 +61,8 @@ from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderC
 
 ##### cwkang: load additional packages and define global variables
 from src.utils.common.tokenizer_utils import smart_tokenizer_and_embedding_resize
-from src.utils.common.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
 from src.utils.clm.arguments import ModelArguments, DataTrainingArguments
+from src.utils.clm.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
 from src.utils.clm.evaluation import preprocess_logits_for_metrics, postprocess_predictions
 
 DEFAULT_PAD_TOKEN = "[PAD]"

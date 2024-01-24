@@ -22,5 +22,4 @@ nohup python -m "src.factual_knowledge_probing.run_"$model_type \
     --seed 0 \
     --report_to tensorboard \
     --output_dir "results/"$out_dir \
-    --truncated_prompt True \
     > "results/logs/log."$out_dir".test_"$dataset_name"_"$dataset_type &

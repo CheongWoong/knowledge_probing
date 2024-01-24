@@ -61,8 +61,8 @@ from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderC
 ##### cwkang: load additional packages and define global variables
 from functools import partial
 from src.utils.common.tokenizer_utils import smart_tokenizer_and_embedding_resize
-from src.utils.common.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
 from src.utils.mlm.arguments import ModelArguments, DataTrainingArguments
+from src.utils.mlm.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
 from src.utils.mlm.evaluation import preprocess_logits_for_metrics, postprocess_predictions
 
 DEFAULT_PAD_TOKEN = "[PAD]"
@@ -559,7 +559,8 @@ def main():
         max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(eval_dataset)
         metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
         try:
-            perplexity = math.exp(metrics["eval_loss"])
+            # perplexity = math.exp(metrics["eval_loss"])
+            perplexity = float("inf") ## cwkang
         except OverflowError:
             perplexity = float("inf")
         metrics["perplexity"] = perplexity

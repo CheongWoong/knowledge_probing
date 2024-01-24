@@ -31,7 +31,7 @@ def get_masks(tokenizer, f_all):
     stopword_list = stopwords.words("english")
     stopword_ids = []
     for stopword in stopword_list:
-        token_ids = tokenizer.encode(' '+stopword)
+        token_ids = tokenizer.encode(' '+stopword, add_special_tokens=False)
         if len(token_ids) == 1:
             stopword_ids.append(token_ids[0])
     stopword_mask = torch.tensor(stopword_ids, dtype=torch.int32)
@@ -45,7 +45,7 @@ def get_masks(tokenizer, f_all):
         subj = example['subj']
         rel = example['rel_id']
         obj = example['output']
-        obj_id = tokenizer.encode(' '+obj)[0]
+        obj_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
         gold_obj_relation_wise_ids[rel].add(obj_id)
         subj_rel_pair_gold_obj_ids[f'{subj}_{rel}'].add(obj_id)
         gold_obj_ids.add(obj_id)
@@ -121,7 +121,7 @@ def postprocess_predictions(predictions, label_ids, validation_dataset, validati
         ## When computing hits@1, remove other gold objects for the given subj-rel pair.
         subj_rel_pair_gold_obj_mask = deepcopy(subj_rel_pair_gold_obj_ids[example['subj']+'_'+example['rel_id']])
         obj = example['output']
-        obj_id = tokenizer.encode(' '+obj)[0]
+        obj_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
         subj_rel_pair_gold_obj_mask.remove(obj_id)
 
         logits_for_hits_1 = logits.copy()
@@ -158,5 +158,5 @@ def postprocess_predictions(predictions, label_ids, validation_dataset, validati
 
     basename = os.path.basename(validation_file_path)
     dataset_name = os.path.basename(os.path.dirname(validation_file_path))
-    with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}.json"), "w") as fout:
+    with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}"), "w") as fout:
         json.dump(predictions_output, fout)
