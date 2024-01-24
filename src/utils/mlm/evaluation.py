@@ -11,14 +11,14 @@ from nltk.corpus import stopwords
 import torch
 
 
-def preprocess_logits_for_metrics(logits, labels):
+def preprocess_logits_for_metrics(logits, labels, tokenizer):
     if isinstance(logits, tuple):
         # Depending on the model and config, logits may contain extra tensors,
         # like past_key_values, but logits always come first
         logits = logits[0]
     # return logits.argmax(dim=-1)
     ##### cw: modification for factual knowledge probing
-    label_idx = torch.argmax((labels[:, 1:] >= 0)*1, dim=-1) ## find the index of obj in the (subj-rel-obj) triple.
+    label_idx = torch.argmax((labels[:, 1:] == tokenizer.mask_token_id)*1, dim=-1) ## find the index of obj ([MASK]) in the (subj-rel-obj) triple.
     mask = torch.zeros(labels[:, 1:].shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
     logits = logits[:, -(mask.shape[1]+1):] ## cw: to match the shape (the input length is expanded when using prompt tuning methods)
     logits = logits[:, :-1][mask] ## get the logits at the label (obj) index.

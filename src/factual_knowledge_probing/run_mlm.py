@@ -59,6 +59,7 @@ from transformers.utils.versions import require_version
 from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderConfig ## cwkang: add peft modules
 
 ##### cwkang: load additional packages and define global variables
+from functools import partial
 from src.utils.common.tokenizer_utils import smart_tokenizer_and_embedding_resize
 from src.utils.common.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
 from src.utils.mlm.arguments import ModelArguments, DataTrainingArguments
@@ -517,7 +518,7 @@ def main():
         data_collator=data_collator,
         # compute_metrics=compute_metrics if training_args.do_eval and not is_torch_tpu_available() else None,
         compute_metrics=None, ## cw: we manually do the evaluation later.
-        preprocess_logits_for_metrics=preprocess_logits_for_metrics
+        preprocess_logits_for_metrics=partial(preprocess_logits_for_metrics, tokenizer=tokenizer)
         if training_args.do_eval and not is_torch_tpu_available()
         else None,
     )
