@@ -60,10 +60,10 @@ from transformers.utils.versions import require_version
 from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderConfig ## cwkang: add peft modules
 
 ##### cwkang: load additional packages and define global variables
-from src.utils.common.clm_arguments import ModelArguments, DataTrainingArguments
 from src.utils.common.tokenizer_utils import smart_tokenizer_and_embedding_resize
-from src.utils.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
-from src.utils.evaluation import preprocess_logits_for_metrics, postprocess_predictions
+from src.utils.common.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
+from src.utils.clm.arguments import ModelArguments, DataTrainingArguments
+from src.utils.clm.evaluation import preprocess_logits_for_metrics, postprocess_predictions
 
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
