@@ -55,12 +55,12 @@ def preprocess(
     block_size
 ) -> Dict:
     """Preprocess the data by tokenizing."""
-    examples = [s + ' ' + t for s, t in zip(sources, targets)]
+    examples = [s.replace('[MASK]', t) for s, t in zip(sources, targets)]
     examples_tokenized, sources_tokenized = [tokenize_fn(strings, tokenizer, block_size) for strings in (examples, sources)]
-    input_ids = examples_tokenized["input_ids"]
-    labels = deepcopy(input_ids)
-    for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
-        label[:source_len] = IGNORE_INDEX
+    input_ids = sources_tokenized["input_ids"]
+    labels = examples_tokenized["input_ids"]
+    # for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
+    #     label[:source_len-1] = IGNORE_INDEX
     return dict(input_ids=input_ids, labels=labels)
 
 class SupervisedDataset(Dataset):
@@ -79,7 +79,7 @@ class SupervisedDataset(Dataset):
         sources = [
             prompt.format_map(example) for example in list_data_dict
         ]
-        targets = [f"{example['output']}{tokenizer.eos_token}" for example in list_data_dict]
+        targets = [f"{example['output']}" for example in list_data_dict]
 
         logging.warning("Tokenizing inputs... This may take some time...")
         data_dict = preprocess(sources, targets, tokenizer, block_size)

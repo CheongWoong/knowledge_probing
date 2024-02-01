@@ -18,10 +18,11 @@ def preprocess_logits_for_metrics(logits, labels, tokenizer):
         logits = logits[0]
     # return logits.argmax(dim=-1)
     ##### cw: modification for factual knowledge probing
-    label_idx = torch.argmax((labels == tokenizer.mask_token_id)*1, dim=-1) ## find the index of obj ([MASK]) in the (subj-rel-obj) triple.
-    mask = torch.zeros(labels.shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
-    logits = logits[:, -(mask.shape[1]):] ## cw: to match the shape (the input length is expanded when using prompt tuning methods)
-    logits = logits[mask] ## get the logits at the label (obj) index.
+    # label_idx = torch.argmax((labels == tokenizer.mask_token_id)*1, dim=-1) ## find the index of obj ([MASK]) in the (subj-rel-obj) triple.
+    # mask = torch.zeros(labels.shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
+    # logits = logits[:, -(mask.shape[1]):] ## cw: to match the shape (the input length is expanded when using prompt tuning methods)
+    # logits = logits[mask] ## get the logits at the label (obj) index.
+    logits = logits[:,-3]
     # return logits.detach().cpu()
     return logits ## keep logits on gpu for errors in the multi-gpu setting.
     #####
@@ -92,8 +93,8 @@ def postprocess_predictions(predictions, label_ids, validation_dataset, validati
         f_all = json.load(fin)
 
     stopword_mask, gold_obj_mask, gold_obj_relation_wise_mask, subj_rel_pair_gold_obj_ids = get_masks(tokenizer, f_all)
-    
-    label_ids = label_ids[:, 1:]
+
+    label_ids = label_ids[:, -3:-2]
     label_ids[label_ids == -100] = tokenizer.pad_token_id
     label_texts = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
     
