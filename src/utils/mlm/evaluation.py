@@ -18,10 +18,10 @@ def preprocess_logits_for_metrics(logits, labels, tokenizer):
         logits = logits[0]
     # return logits.argmax(dim=-1)
     ##### cw: modification for factual knowledge probing
-    label_idx = torch.argmax((labels[:, 1:] == tokenizer.mask_token_id)*1, dim=-1) ## find the index of obj ([MASK]) in the (subj-rel-obj) triple.
-    mask = torch.zeros(labels[:, 1:].shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
-    logits = logits[:, -(mask.shape[1]+1):] ## cw: to match the shape (the input length is expanded when using prompt tuning methods)
-    logits = logits[:, :-1][mask] ## get the logits at the label (obj) index.
+    label_idx = torch.argmax((labels == tokenizer.mask_token_id)*1, dim=-1) ## find the index of obj ([MASK]) in the (subj-rel-obj) triple.
+    mask = torch.zeros(labels.shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
+    logits = logits[:, -(mask.shape[1]):] ## cw: to match the shape (the input length is expanded when using prompt tuning methods)
+    logits = logits[mask] ## get the logits at the label (obj) index.
     # return logits.detach().cpu()
     return logits ## keep logits on gpu for errors in the multi-gpu setting.
     #####
