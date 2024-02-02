@@ -62,7 +62,7 @@ bash scripts/factual_knowledge_probing/test/aggregate_predictions_for_prompt_tun
 This evaluation script computes score and saves the results in 'score_factual_probing_test.json'.
 ```
 # prediction_file: ['results/gpt_neo_125M_LAMA_TREx_finetuning/pred_LAMA_TREx_test.json', ...]
-bash scripts/test/compute_score.sh {prediction_file} {dataset_name}
+bash scripts/factual_knowledge_probing/test/compute_score.sh {prediction_file} {dataset_name}
 ```
 
 
