@@ -74,7 +74,7 @@ def get_masks(tokenizer, f_all):
 
     return stopword_mask, gold_obj_mask, gold_obj_relation_wise_mask, subj_rel_pair_gold_obj_ids
 
-def postprocess_single_prediction(logits, logits_for_hits_1, probs, tokenizer, label_id, label_text):
+def postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id, label_text):
     results = {}
 
     # compute top 100 predictions
@@ -83,12 +83,15 @@ def postprocess_single_prediction(logits, logits_for_hits_1, probs, tokenizer, l
     results["top_100_text"] = [tokenizer.decode(token_id).strip() for token_id in top_100_idx]
     results["top_100_logits"] = logits[top_100_idx].tolist()
     results["top_100_probs"] = probs[top_100_idx].tolist()
-    # compute mrr
-    results["mrr"] = 1/(np.where(sorted_idx == label_id)[0][0]+1)
-    # compute hits@1
-    top_1_idx = np.argsort(logits_for_hits_1)[::-1][0]
-    top_1_text = tokenizer.decode(top_1_idx).strip().lower()
-    results["hits@1"] = 1.0 if top_1_text == label_text else 0.0
+    # compute reciprocal rank
+    rank = np.where(sorted_idx == label_id)[0][0]+1
+    results["mrr"] = 1/rank
+    # compute hits@k
+    sorted_idx_for_hits_k = np.argsort(logits_for_hits_k)[::-1]
+    rank_for_hits_k = np.where(sorted_idx_for_hits_k == label_id)[0][0]+1
+    results["hits@1"] = 1.0 if rank_for_hits_k <= 1 else 0.0
+    results["hits@10"] = 1.0 if rank_for_hits_k <= 10 else 0.0
+    results["hits@100"] = 1.0 if rank_for_hits_k <= 100 else 0.0
 
     return results
 
@@ -124,21 +127,21 @@ def postprocess_predictions(predictions, validation_dataset, validation_file_pat
         label_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
         subj_rel_pair_gold_obj_mask.remove(label_id)
 
-        logits_for_hits_1 = logits.copy()
-        logits_for_hits_1_remove_stopwords = logits_remove_stopwords.copy()
-        logits_for_hits_1_gold_objs = logits_gold_objs.copy()
-        logits_for_hits_1_gold_objs_relation_wise = logits_gold_objs_relation_wise.copy()
+        logits_for_hits_k = logits.copy()
+        logits_for_hits_k_remove_stopwords = logits_remove_stopwords.copy()
+        logits_for_hits_k_gold_objs = logits_gold_objs.copy()
+        logits_for_hits_k_gold_objs_relation_wise = logits_gold_objs_relation_wise.copy()
 
-        logits_for_hits_1[subj_rel_pair_gold_obj_mask] = -10000.
-        logits_for_hits_1_remove_stopwords[subj_rel_pair_gold_obj_mask] = -10000.
-        logits_for_hits_1_gold_objs[subj_rel_pair_gold_obj_mask] = -10000.
-        logits_for_hits_1_gold_objs_relation_wise[subj_rel_pair_gold_obj_mask] = -10000.
+        logits_for_hits_k[subj_rel_pair_gold_obj_mask] = -10000.
+        logits_for_hits_k_remove_stopwords[subj_rel_pair_gold_obj_mask] = -10000.
+        logits_for_hits_k_gold_objs[subj_rel_pair_gold_obj_mask] = -10000.
+        logits_for_hits_k_gold_objs_relation_wise[subj_rel_pair_gold_obj_mask] = -10000.
 
         ### Compute the results (top 100 predictions, MRR, hits@1)
-        postprocessed_results = postprocess_single_prediction(logits, logits_for_hits_1, probs, tokenizer, label_id, label_text)
-        postprocessed_results_remove_stopwords = postprocess_single_prediction(logits_remove_stopwords, logits_for_hits_1_remove_stopwords, probs, tokenizer, label_id, label_text)
-        postprocessed_results_gold_objs = postprocess_single_prediction(logits_gold_objs, logits_for_hits_1_gold_objs, probs, tokenizer, label_id, label_text)
-        postprocessed_results_gold_objs_relation_wise = postprocess_single_prediction(logits_gold_objs_relation_wise, logits_for_hits_1_gold_objs_relation_wise, probs, tokenizer, label_id, label_text)
+        postprocessed_results = postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id, label_text)
+        postprocessed_results_remove_stopwords = postprocess_single_prediction(logits_remove_stopwords, logits_for_hits_k_remove_stopwords, probs, tokenizer, label_id, label_text)
+        postprocessed_results_gold_objs = postprocess_single_prediction(logits_gold_objs, logits_for_hits_k_gold_objs, probs, tokenizer, label_id, label_text)
+        postprocessed_results_gold_objs_relation_wise = postprocess_single_prediction(logits_gold_objs_relation_wise, logits_for_hits_k_gold_objs_relation_wise, probs, tokenizer, label_id, label_text)
 
         postprocessed_results_aggregated = {
             "uid": example["uid"],
