@@ -61,9 +61,9 @@ from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderC
 ##### cwkang: load additional packages and define global variables
 from functools import partial
 from src.utils.common.tokenizer_utils import smart_tokenizer_and_embedding_resize
+from src.utils.common.evaluation import preprocess_logits_for_metrics, postprocess_predictions
 from src.utils.mlm.arguments import ModelArguments, DataTrainingArguments
 from src.utils.mlm.dataset import SupervisedDataset, DataCollatorForSupervisedDataset
-from src.utils.mlm.evaluation import preprocess_logits_for_metrics, postprocess_predictions
 
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
@@ -317,7 +317,7 @@ def main():
             model=model,
         )
     #####
-    tokenizer.padding_side = 'left' # use it to make evaluation easier (by aligning the masked index)
+    tokenizer.padding_side = 'left' # cwkang: use it to make evaluation easier (by aligning the obj index)
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
     # on a small vocab and want a smaller embedding size, remove this test.
@@ -459,7 +459,7 @@ def main():
 
     ##### cwkang: create the datasets and collator.
     if 'train' in raw_datasets:
-        train_dataset = SupervisedDataset(raw_datasets['train'], tokenizer, max_seq_length, custom_args.truncated_prompt)
+        train_dataset = SupervisedDataset(raw_datasets['train'], tokenizer, max_seq_length, custom_args.truncated_prompt, is_training=True)
     if 'validation' in raw_datasets:
         eval_dataset = SupervisedDataset(raw_datasets['validation'], tokenizer, max_seq_length, custom_args.truncated_prompt)
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
@@ -554,7 +554,7 @@ def main():
         ##### cw: we manually do the evaluation here.
         results = trainer.predict(eval_dataset)
         metrics = results.metrics
-        postprocess_predictions(results.predictions, results.label_ids, raw_datasets['validation'], data_args.validation_file, training_args.output_dir, tokenizer)
+        postprocess_predictions(results.predictions, raw_datasets['validation'], data_args.validation_file, training_args.output_dir, tokenizer)
         #####
 
         max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(eval_dataset)

@@ -11,18 +11,23 @@ from nltk.corpus import stopwords
 import torch
 
 
-def preprocess_logits_for_metrics(logits, labels, tokenizer):
+def preprocess_logits_for_metrics(logits, labels, tokenizer=None):
     if isinstance(logits, tuple):
         # Depending on the model and config, logits may contain extra tensors,
         # like past_key_values, but logits always come first
         logits = logits[0]
     # return logits.argmax(dim=-1)
-    ##### cw: modification for factual knowledge probing
-    # label_idx = torch.argmax((labels == tokenizer.mask_token_id)*1, dim=-1) ## find the index of obj ([MASK]) in the (subj-rel-obj) triple.
-    # mask = torch.zeros(labels.shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
-    # logits = logits[:, -(mask.shape[1]):] ## cw: to match the shape (the input length is expanded when using prompt tuning methods)
-    # logits = logits[mask] ## get the logits at the label (obj) index.
-    logits = logits[:,-3]
+
+    ##### cw: modification for factual knowledge probing    
+    # clm
+    if tokenizer is None:
+        logits = logits[:, -2]
+    # mlm
+    else:
+        label_idx = torch.argmax((labels == tokenizer.mask_token_id)*1, dim=-1) ## find the index of obj ([MASK]) in the (subj-rel-obj) triple.
+        mask = torch.zeros(labels.shape, device=labels.device).scatter(1, label_idx.unsqueeze(1), 1.0) > 0.5
+        logits = logits[:, -(mask.shape[1]):] ## cw: to match the shape (the input length is expanded when using prompt tuning methods)
+        logits = logits[mask] ## get the logits at the label (obj) index.
     # return logits.detach().cpu()
     return logits ## keep logits on gpu for errors in the multi-gpu setting.
     #####
@@ -87,16 +92,12 @@ def postprocess_single_prediction(logits, logits_for_hits_1, probs, tokenizer, l
 
     return results
 
-def postprocess_predictions(predictions, label_ids, validation_dataset, validation_file_path, output_dir, tokenizer):
+def postprocess_predictions(predictions, validation_dataset, validation_file_path, output_dir, tokenizer):
     # get the masks to restrict output candidate sets.
     with open(os.path.join(os.path.dirname(validation_file_path), 'all.json'), 'r') as fin:
         f_all = json.load(fin)
 
     stopword_mask, gold_obj_mask, gold_obj_relation_wise_mask, subj_rel_pair_gold_obj_ids = get_masks(tokenizer, f_all)
-
-    label_ids = label_ids[:, -3:-2]
-    label_ids[label_ids == -100] = tokenizer.pad_token_id
-    label_texts = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
     
     # post-process the predictions for evaluation and save.
     print("Processing output predictions...")
@@ -115,15 +116,13 @@ def postprocess_predictions(predictions, label_ids, validation_dataset, validati
         logits_gold_objs_relation_wise[gold_obj_relation_wise_mask[example['rel_id']]] = -10000.
 
         probs = softmax(logits)
-        label_id = label_ids[idx]
-        label_id = label_id[label_id != tokenizer.pad_token_id][0] ## we only consider a single-token (the first generated token) evaluation
-        label_text = label_texts[idx].strip().lower()
 
         ## When computing hits@1, remove other gold objects for the given subj-rel pair.
         subj_rel_pair_gold_obj_mask = deepcopy(subj_rel_pair_gold_obj_ids[example['subj']+'_'+example['rel_id']])
         obj = example['output']
-        obj_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
-        subj_rel_pair_gold_obj_mask.remove(obj_id)
+        label_text = obj.strip().lower()
+        label_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
+        subj_rel_pair_gold_obj_mask.remove(label_id)
 
         logits_for_hits_1 = logits.copy()
         logits_for_hits_1_remove_stopwords = logits_remove_stopwords.copy()
@@ -159,5 +158,8 @@ def postprocess_predictions(predictions, label_ids, validation_dataset, validati
 
     basename = os.path.basename(validation_file_path)
     dataset_name = os.path.basename(os.path.dirname(validation_file_path))
-    with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}"), "w") as fout:
-        json.dump(predictions_output, fout)
+    with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}l"), "w") as fout:
+        # json.dump(predictions_output, fout)
+        for line in predictions_output:
+            json.dump(line, fout)
+            fout.write('\n')

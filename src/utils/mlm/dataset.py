@@ -14,9 +14,9 @@ DEFAULT_EOS_TOKEN = "</s>"
 DEFAULT_BOS_TOKEN = "<s>"
 DEFAULT_UNK_TOKEN = "<unk>"
 PROMPT_DICT = {
-    "prompt_truncated": (
-        " {truncated_input}"
-    ),
+    # "prompt_truncated": (
+    #     " {truncated_input}"
+    # ),
     "prompt_full": (
         " {input}"
     ),
@@ -52,37 +52,52 @@ def preprocess(
     sources: Sequence[str],
     targets: Sequence[str],
     tokenizer: transformers.PreTrainedTokenizer,
-    block_size
+    block_size,
+    is_training=False
 ) -> Dict:
     """Preprocess the data by tokenizing."""
-    examples = [s.replace('[MASK]', t) for s, t in zip(sources, targets)]
-    examples_tokenized, sources_tokenized = [tokenize_fn(strings, tokenizer, block_size) for strings in (examples, sources)]
+    # examples = [s + ' ' + t for s, t in zip(sources, targets)]
+    # examples_tokenized, sources_tokenized = [tokenize_fn(strings, tokenizer, block_size) for strings in (examples, sources)]
+    sources_tokenized = tokenize_fn(sources, tokenizer, block_size)
     input_ids = sources_tokenized["input_ids"]
-    labels = examples_tokenized["input_ids"]
+    # labels = deepcopy(input_ids)
     # for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
     #     label[:source_len-1] = IGNORE_INDEX
+    if not is_training:
+        labels = deepcopy(input_ids)
+    else:
+        labels = [s.replace('[MASK]', t) for s, t in zip(sources, targets)]
+        labels_tokenized = tokenize_fn(labels, tokenizer, block_size)
+        labels = labels_tokenized["input_ids"]
+        for i in range(len(labels)):
+            new_label = [IGNORE_INDEX]*len(labels[i])
+            mask_idx = input_ids[i].index(tokenizer.mask_token_id)
+            new_label[mask_idx] = labels[i][mask_idx]
+            labels[i] = new_label
     return dict(input_ids=input_ids, labels=labels)
 
 class SupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data, tokenizer: transformers.PreTrainedTokenizer, block_size, truncated):
+    def __init__(self, data, tokenizer: transformers.PreTrainedTokenizer, block_size, truncated, is_training=False):
         super(SupervisedDataset, self).__init__()
         logging.warning("Loading data...")
         list_data_dict = data
 
         logging.warning("Formatting inputs...")
         if truncated:
-            prompt = PROMPT_DICT["prompt_truncated"]
+            # prompt = PROMPT_DICT["prompt_truncated"]
+            raise Exception
         else:
             prompt = PROMPT_DICT["prompt_full"]
         sources = [
             prompt.format_map(example) for example in list_data_dict
         ]
+        # targets = [f"{example['output']}{tokenizer.eos_token}" for example in list_data_dict]
         targets = [f"{example['output']}" for example in list_data_dict]
 
         logging.warning("Tokenizing inputs... This may take some time...")
-        data_dict = preprocess(sources, targets, tokenizer, block_size)
+        data_dict = preprocess(sources, targets, tokenizer, block_size, is_training)
 
         self.input_ids = data_dict["input_ids"]
         self.labels = data_dict["labels"]
