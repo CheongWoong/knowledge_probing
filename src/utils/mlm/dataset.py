@@ -69,11 +69,8 @@ def preprocess(
         labels = [s.replace('[MASK]', t) for s, t in zip(sources, targets)]
         labels_tokenized = tokenize_fn(labels, tokenizer, block_size)
         labels = labels_tokenized["input_ids"]
-        for i in range(len(labels)):
-            new_label = [IGNORE_INDEX]*len(labels[i])
-            mask_idx = input_ids[i].index(tokenizer.mask_token_id)
-            new_label[mask_idx] = labels[i][mask_idx]
-            labels[i] = new_label
+        for input_id, label in zip(input_ids, labels):
+            label[input_id != tokenizer.mask_token_id] = IGNORE_INDEX
     return dict(input_ids=input_ids, labels=labels)
 
 class SupervisedDataset(Dataset):
