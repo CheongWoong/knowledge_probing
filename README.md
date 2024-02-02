@@ -80,6 +80,7 @@ Run the following script to train the model with prompt tuning.
 The finetuned models and prediction files are saved in 'results/{model_name_or_path}_{dataset_name}_prompt_tuning'.  
 Note that this script runs prompt tuning for every relation iteratively.
 ```
+bash scripts/factual_knowledge_probing/prompt_tuning/prepare_for_prompt_tuning.sh {dataset_name}
 bash scripts/factual_knowledge_probing/prompt_tuning/prompt_tuning.sh {model_type} {model_name_or_path} {dataset_name}
 ```
 
