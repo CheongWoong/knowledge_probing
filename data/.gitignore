@@ -2,3 +2,6 @@
 *
 # Except this file
 !.gitignore
+!LAMA_TREx/all.json
+!LAMA_TREx/test.json
+!LAMA_TREx/train.json
