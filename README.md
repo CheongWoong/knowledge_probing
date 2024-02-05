@@ -39,7 +39,7 @@ bash scripts/installation/download_pretrained_models.sh
 ## Evaluation
 
 ### Test
-The prediction file (e.g. 'pred_{dataset_name}\_test.json') is saved in 'results/{model_name_or_path}_{dataset_name}'.
+The prediction file (e.g. 'pred_{dataset_name}\_test.jsonl') is saved in 'results/{model_name_or_path}_{dataset_name}'.
 ```
 # Zero-shot test
 # model_type: ['clm', 'mlm']
@@ -61,7 +61,7 @@ bash scripts/factual_knowledge_probing/test/aggregate_predictions_for_prompt_tun
 ### Compute Score
 This evaluation script computes score and saves the results in 'score_factual_probing_test.json'.
 ```
-# prediction_file: ['results/gpt_neo_125M_LAMA_TREx_finetuning/pred_LAMA_TREx_test.json', ...]
+# prediction_file: ['results/gpt_neo_125M_LAMA_TREx_finetuning/pred_LAMA_TREx_test.jsonl', ...]
 bash scripts/factual_knowledge_probing/test/compute_score.sh {prediction_file} {dataset_name}
 ```
 
