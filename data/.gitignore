@@ -2,3 +2,5 @@
 *
 # Except this file
 !.gitignore
+!LAMA_TREx
+!ConceptNet

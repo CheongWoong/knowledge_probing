@@ -1,10 +1,11 @@
-model_name_or_path=$1
-dataset_type=$2
+model_type=$1
+model_name_or_path=$2
+dataset_name=$3
+dataset_type=$4
 model_name=$(basename $model_name_or_path)
-dataset_name="LAMA_TREx"
 out_dir=$model_name"_"$dataset_name"_zeroshot"
 
-nohup python -m src.factual_knowledge_probing.run_factual_knowledge_probing \
+nohup python -m "src.factual_knowledge_probing.run_"$model_type \
     --model_name_or_path $model_name_or_path \
     --do_train False \
     --do_eval True \
@@ -21,5 +22,4 @@ nohup python -m src.factual_knowledge_probing.run_factual_knowledge_probing \
     --seed 0 \
     --report_to tensorboard \
     --output_dir "results/"$out_dir \
-    --truncated_prompt True \
     > "results/logs/log."$out_dir".test_"$dataset_name"_"$dataset_type &

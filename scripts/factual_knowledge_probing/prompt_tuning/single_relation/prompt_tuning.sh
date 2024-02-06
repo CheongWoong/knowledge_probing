@@ -1,11 +1,12 @@
-model_name_or_path=$1
-rel_id=$2
+model_type=$1
+model_name_or_path=$2
+dataset_name=$3
+rel_id=$4
 model_name=$(basename $model_name_or_path)
-dataset_name="LAMA_TREx"
 training_type="prompt_tuning"
 out_dir=$model_name"_"$dataset_name"_"$training_type
 
-python -m src.factual_knowledge_probing.run_factual_knowledge_probing \
+python -m "src.factual_knowledge_probing.run_"$model_type \
     --model_name_or_path $model_name_or_path \
     --do_train True \
     --do_eval True \
