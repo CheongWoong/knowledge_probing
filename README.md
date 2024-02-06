@@ -49,7 +49,7 @@ The prediction file (e.g. 'pred_{dataset_name}\_test.jsonl') is saved in 'result
 # model_name_or_path: ['EleutherAI/gpt-neo-125m', 'EleutherAI/gpt-j-6b', 'bert-base-uncased', 'bert-large-uncased', ...] 
 # dataset_type: ['test', 'train', ...]
 bash scripts/factual_knowledge_probing/test/test_zeroshot.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
-# (Optional) run with deepspeed ZeRO-3
+# (Optional) Run on multi-gpus with DeepSpeed ZeRO-3
 bash scripts/factual_knowledge_probing/test/test_zeroshot_ds_zero3.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
 
 # Test finetuned models
@@ -62,7 +62,7 @@ bash scripts/factual_knowledge_probing/test/aggregate_predictions_for_prompt_tun
 ```
 
 ### Compute Score
-This evaluation script computes score and saves the results in 'score_factual_probing_test.json'.
+This evaluation script computes score and saves the results in 'results/{model_name_or_path}/score_{dataset_name}_{dataset_type}.json'.
 ```
 # prediction_file: ['results/gpt-neo-125m_LAMA_TREx_zeroshot/pred_LAMA_TREx_test.jsonl', ...]
 bash scripts/factual_knowledge_probing/test/compute_score.sh {prediction_file} {dataset_name}
