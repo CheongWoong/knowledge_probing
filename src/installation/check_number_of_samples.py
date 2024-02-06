@@ -1,15 +1,17 @@
 from collections import defaultdict
 import json
-
+import argparse
 
 if __name__ == '__main__':
-    dataset_name = 'LAMA_TREx'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
+    args = parser.parse_args()
 
-    with open(f'data/{dataset_name}/train.json', 'r') as fin:
+    with open(f'data/{args.dataset_name}/train.json', 'r') as fin:
         train = json.load(fin)
-    with open(f'data/{dataset_name}/test.json', 'r') as fin:
+    with open(f'data/{args.dataset_name}/test.json', 'r') as fin:
         test = json.load(fin)
-    with open(f'data/{dataset_name}/all.json', 'r') as fin:
+    with open(f'data/{args.dataset_name}/all.json', 'r') as fin:
         all = json.load(fin)
 
     train_counts = defaultdict(int)
