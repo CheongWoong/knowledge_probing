@@ -317,7 +317,6 @@ def main():
             model=model,
         )
     #####
-    tokenizer.padding_side = 'left' # cwkang: use it to make evaluation easier (by aligning the obj index)
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
     # on a small vocab and want a smaller embedding size, remove this test.
