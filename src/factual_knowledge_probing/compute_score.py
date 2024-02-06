@@ -3,6 +3,7 @@ import json
 import argparse
 from collections import defaultdict
 import numpy as np
+from tqdm.auto import tqdm
 
 
 parser = argparse.ArgumentParser()
@@ -31,7 +32,7 @@ mrr_total, mrr_total_remove_stopwords, mrr_total_gold_objs, mrr_total_gold_objs_
 mrr_relation_wise, mrr_relation_wise_remove_stopwords, mrr_relation_wise_gold_objs, mrr_relation_wise_gold_objs_relation_wise = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 
 with jsonlines.open(args.pred_file) as fin:
-    for pred in fin.iter():
+    for pred in tqdm(fin.iter()):
         uid = pred['uid']
         rel_id = uid_rel_map[uid]
 
@@ -113,7 +114,11 @@ result['mrr_gold_objs'] = f"%.2f +- %.2f" % (mean_and_std(mrr_total_gold_objs))
 result['mrr_gold_objs_relation_wise'] = f"%.2f +- %.2f" % (mean_and_std(mrr_total_gold_objs_relation_wise))
 print(len(hits_1_total))
 
-rel_ids = sorted(list(hits_1_relation_wise.keys()), key=lambda x: int(x[1:]))
+try:
+    rel_ids = sorted(list(hits_1_relation_wise.keys()), key=lambda x: int(x[1:]))
+except:
+    rel_ids = sorted(list(hits_1_relation_wise.keys()))
+
 for rel_id in rel_ids:
     print(rel_id, len(hits_1_relation_wise[rel_id]))
     result['hits@1_' + rel_id] = f"%.2f +- %.2f" % (mean_and_std(hits_1_relation_wise[rel_id]))
