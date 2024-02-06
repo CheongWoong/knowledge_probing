@@ -58,6 +58,7 @@ def preprocess(
     """Preprocess the data by tokenizing."""
     # examples = [s + ' ' + t for s, t in zip(sources, targets)]
     # examples_tokenized, sources_tokenized = [tokenize_fn(strings, tokenizer, block_size) for strings in (examples, sources)]
+    sources = [s.replace('[MASK]', tokenizer.mask_token) for s in sources]
     sources_tokenized = tokenize_fn(sources, tokenizer, block_size)
     input_ids = sources_tokenized["input_ids"]
     # labels = deepcopy(input_ids)
