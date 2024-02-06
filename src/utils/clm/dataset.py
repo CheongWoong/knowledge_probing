@@ -59,10 +59,10 @@ def preprocess(
     examples_tokenized, sources_tokenized = [tokenize_fn(strings, tokenizer, block_size) for strings in (examples, sources)]
     input_ids = examples_tokenized["input_ids"]
     labels = deepcopy(input_ids)
-    # for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
-    #     label[:source_len] = IGNORE_INDEX
-    for label in labels:
-        label[:-1] = IGNORE_INDEX
+    for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
+        label[:source_len] = IGNORE_INDEX
+    # for label in labels:
+    #     label[:-1] = IGNORE_INDEX
     return dict(input_ids=input_ids, labels=labels)
 
 class SupervisedDataset(Dataset):

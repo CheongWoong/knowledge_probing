@@ -60,11 +60,6 @@ def get_masks(tokenizer, f_all):
         subj_rel_pair_gold_obj_ids[f'{subj}_{rel}'].add(obj_id)
         gold_obj_ids.add(obj_id)
 
-        obj_lower_id = tokenizer.encode(' '+obj.lower(), add_special_tokens=False)[0]
-        gold_obj_relation_wise_ids[rel].add(obj_lower_id)
-        subj_rel_pair_gold_obj_ids[f'{subj}_{rel}'].add(obj_lower_id)
-        gold_obj_ids.add(obj_lower_id)
-
     ## compute negated ids (== words that are not gold objects)
     gold_obj_mask = [i for i in range(tokenizer.vocab_size)]
     gold_obj_relation_wise_mask = {}
@@ -83,7 +78,7 @@ def get_masks(tokenizer, f_all):
 
     return stopword_mask, gold_obj_mask, gold_obj_relation_wise_mask, subj_rel_pair_gold_obj_ids
 
-def postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id, label_lower_id):
+def postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id):
     results = {}
 
     # compute top 100 predictions
@@ -98,8 +93,6 @@ def postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, l
     # compute hits@k
     sorted_idx_for_hits_k = np.argsort(logits_for_hits_k)[::-1]
     rank_for_hits_k = np.where(sorted_idx_for_hits_k == label_id)[0][0]+1
-    rank_for_hits_k_temp = np.where(sorted_idx_for_hits_k == label_lower_id)[0][0]+1
-    rank_for_hits_k = min(rank_for_hits_k, rank_for_hits_k_temp)
     results["hits@1"] = 1.0 if rank_for_hits_k <= 1 else 0.0
     results["hits@10"] = 1.0 if rank_for_hits_k <= 10 else 0.0
     results["hits@100"] = 1.0 if rank_for_hits_k <= 100 else 0.0
@@ -136,7 +129,6 @@ def postprocess_predictions(predictions, validation_dataset, validation_file_pat
         obj = example['output']
         label_text = obj
         label_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
-        label_lower_id = tokenizer.encode(' '+obj.lower(), add_special_tokens=False)[0]
         subj_rel_pair_gold_obj_mask.remove(label_id)
 
         logits_for_hits_k = logits.copy()
@@ -150,10 +142,10 @@ def postprocess_predictions(predictions, validation_dataset, validation_file_pat
         logits_for_hits_k_gold_objs_relation_wise[subj_rel_pair_gold_obj_mask] = -10000.
 
         ### Compute the results (top 100 predictions, MRR, hits@1)
-        postprocessed_results = postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id, label_lower_id)
-        postprocessed_results_remove_stopwords = postprocess_single_prediction(logits_remove_stopwords, logits_for_hits_k_remove_stopwords, probs, tokenizer, label_id, label_lower_id)
-        postprocessed_results_gold_objs = postprocess_single_prediction(logits_gold_objs, logits_for_hits_k_gold_objs, probs, tokenizer, label_id, label_lower_id)
-        postprocessed_results_gold_objs_relation_wise = postprocess_single_prediction(logits_gold_objs_relation_wise, logits_for_hits_k_gold_objs_relation_wise, probs, tokenizer, label_id, label_lower_id)
+        postprocessed_results = postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id)
+        postprocessed_results_remove_stopwords = postprocess_single_prediction(logits_remove_stopwords, logits_for_hits_k_remove_stopwords, probs, tokenizer, label_id)
+        postprocessed_results_gold_objs = postprocess_single_prediction(logits_gold_objs, logits_for_hits_k_gold_objs, probs, tokenizer, label_id)
+        postprocessed_results_gold_objs_relation_wise = postprocess_single_prediction(logits_gold_objs_relation_wise, logits_for_hits_k_gold_objs_relation_wise, probs, tokenizer, label_id)
 
         postprocessed_results_aggregated = {
             "uid": example["uid"],
