@@ -16,7 +16,7 @@ This setup script creates an environment named 'factual_knowledge_probing'.
 bash scripts/installation/setup_conda.sh
 ```
 
-### Download the LAMA TREx dataset
+### (Optional) Download the LAMA TREx dataset
 The original dataset is saved in 'data/original_LAMA'.  
 The preprocessed dataset is saved in 'data/LAMA_TREx'.
 ```
@@ -26,10 +26,11 @@ bash scripts/installation/preprocess_LAMA_TREx.sh
 
 Check the number of samples for each relation.
 ```
-bash scripts/installation/check_number_of_samples_LAMA_TREx.sh
+# dataset_name: ['LAMA_TREx', 'ConceptNet']
+bash scripts/installation/check_number_of_samples.sh {dataset_name}
 ```
 
-### Download the Pretrained Models (Optional)
+### (Optional) Download the Pretrained Models
 The pretrained models (e.g. 'gpt_j_6B') are saved in 'results/{model_name}'.
 ```
 bash scripts/installation/download_pretrained_models.sh
@@ -43,10 +44,10 @@ The prediction file (e.g. 'pred_{dataset_name}\_test.jsonl') is saved in 'result
 ```
 # Zero-shot test
 # model_type: ['clm', 'mlm']
-# model_name_or_path: ['results/gpt_neo_125M', 'results/gpt_j_6B', 'meta-llama/Llama-2-7b-chat-hf', ...] 
+# model_name_or_path: ['EleutherAI/gpt-neo-125m', 'EleutherAI/gpt-j-6b', 'bert-base-uncased', 'bert-large-uncased', ...] 
 # dataset_type: ['test', 'train', ...]
 bash scripts/factual_knowledge_probing/test/test_zeroshot.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
-# Optional: run with deepspeed ZeRO-3
+# (Optional) run with deepspeed ZeRO-3
 bash scripts/factual_knowledge_probing/test/test_zeroshot_ds_zero3.sh {model_type} {model_name_or_path} {dataset_name} {dataset_type}
 
 # Test finetuned models
@@ -61,7 +62,7 @@ bash scripts/factual_knowledge_probing/test/aggregate_predictions_for_prompt_tun
 ### Compute Score
 This evaluation script computes score and saves the results in 'score_factual_probing_test.json'.
 ```
-# prediction_file: ['results/gpt_neo_125M_LAMA_TREx_finetuning/pred_LAMA_TREx_test.jsonl', ...]
+# prediction_file: ['results/gpt-neo-125m_LAMA_TREx_zeroshot/pred_LAMA_TREx_test.jsonl', ...]
 bash scripts/factual_knowledge_probing/test/compute_score.sh {prediction_file} {dataset_name}
 ```
 
