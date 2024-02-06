@@ -107,66 +107,61 @@ def postprocess_predictions(predictions, validation_dataset, validation_file_pat
     stopword_mask, gold_obj_mask, gold_obj_relation_wise_mask, subj_rel_pair_gold_obj_ids = get_masks(tokenizer, f_all)
     
     # post-process the predictions for evaluation and save.
-    print("Processing output predictions...")
-    predictions_output = []
-    for idx, example in tqdm(enumerate(validation_dataset)):
-        ## 1. default (no restriction)
-        logits = predictions[idx]
-        ## 2. 1 + remove stopwords
-        logits_remove_stopwords = logits.copy()
-        logits_remove_stopwords[stopword_mask] = -10000.
-        ## 3. 1 + restrict candidates to the set of gold objects in the whole dataset
-        logits_gold_objs = logits.copy()
-        logits_gold_objs[gold_obj_mask] = -10000.
-        ## 4. 1 + restrict candidates to the set of gold objects with the same relation
-        logits_gold_objs_relation_wise = logits.copy()
-        logits_gold_objs_relation_wise[gold_obj_relation_wise_mask[example['rel_id']]] = -10000.
-
-        probs = softmax(logits)
-
-        ## When computing hits@1, remove other gold objects for the given subj-rel pair.
-        subj_rel_pair_gold_obj_mask = deepcopy(subj_rel_pair_gold_obj_ids[example['subj']+'_'+example['rel_id']])
-        obj = example['output']
-        label_text = obj
-        label_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
-        subj_rel_pair_gold_obj_mask.remove(label_id)
-
-        logits_for_hits_k = logits.copy()
-        logits_for_hits_k_remove_stopwords = logits_remove_stopwords.copy()
-        logits_for_hits_k_gold_objs = logits_gold_objs.copy()
-        logits_for_hits_k_gold_objs_relation_wise = logits_gold_objs_relation_wise.copy()
-
-        logits_for_hits_k[subj_rel_pair_gold_obj_mask] = -10000.
-        logits_for_hits_k_remove_stopwords[subj_rel_pair_gold_obj_mask] = -10000.
-        logits_for_hits_k_gold_objs[subj_rel_pair_gold_obj_mask] = -10000.
-        logits_for_hits_k_gold_objs_relation_wise[subj_rel_pair_gold_obj_mask] = -10000.
-
-        ### Compute the results (top 100 predictions, MRR, hits@1)
-        postprocessed_results = postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id)
-        postprocessed_results_remove_stopwords = postprocess_single_prediction(logits_remove_stopwords, logits_for_hits_k_remove_stopwords, probs, tokenizer, label_id)
-        postprocessed_results_gold_objs = postprocess_single_prediction(logits_gold_objs, logits_for_hits_k_gold_objs, probs, tokenizer, label_id)
-        postprocessed_results_gold_objs_relation_wise = postprocess_single_prediction(logits_gold_objs_relation_wise, logits_for_hits_k_gold_objs_relation_wise, probs, tokenizer, label_id)
-
-        postprocessed_results_aggregated = {
-            "uid": example["uid"],
-            "label_text": label_text,
-        }
-
-        for key in postprocessed_results:
-            postprocessed_results_aggregated[key] = postprocessed_results[key]
-        for key in postprocessed_results_remove_stopwords:
-            postprocessed_results_aggregated[f"{key}_remove_stopwords"] = postprocessed_results_remove_stopwords[key]
-        for key in postprocessed_results_gold_objs:
-            postprocessed_results_aggregated[f"{key}_gold_objs"] = postprocessed_results_gold_objs[key]
-        for key in postprocessed_results_gold_objs_relation_wise:
-            postprocessed_results_aggregated[f"{key}_gold_objs_relation_wise"] = postprocessed_results_gold_objs_relation_wise[key]
-    
-        predictions_output.append(postprocessed_results_aggregated)
-
     basename = os.path.basename(validation_file_path)
     dataset_name = os.path.basename(os.path.dirname(validation_file_path))
     with open(os.path.join(output_dir, f"pred_{dataset_name}_{basename}l"), "w") as fout:
-        # json.dump(predictions_output, fout)
-        for line in predictions_output:
-            json.dump(line, fout)
+        print("Processing output predictions...")
+        for idx, example in tqdm(enumerate(validation_dataset)):
+            ## 1. default (no restriction)
+            logits = predictions[idx]
+            ## 2. 1 + remove stopwords
+            logits_remove_stopwords = logits.copy()
+            logits_remove_stopwords[stopword_mask] = -10000.
+            ## 3. 1 + restrict candidates to the set of gold objects in the whole dataset
+            logits_gold_objs = logits.copy()
+            logits_gold_objs[gold_obj_mask] = -10000.
+            ## 4. 1 + restrict candidates to the set of gold objects with the same relation
+            logits_gold_objs_relation_wise = logits.copy()
+            logits_gold_objs_relation_wise[gold_obj_relation_wise_mask[example['rel_id']]] = -10000.
+
+            probs = softmax(logits)
+
+            ## When computing hits@1, remove other gold objects for the given subj-rel pair.
+            subj_rel_pair_gold_obj_mask = deepcopy(subj_rel_pair_gold_obj_ids[example['subj']+'_'+example['rel_id']])
+            obj = example['output']
+            label_text = obj
+            label_id = tokenizer.encode(' '+obj, add_special_tokens=False)[0]
+            subj_rel_pair_gold_obj_mask.remove(label_id)
+
+            logits_for_hits_k = logits.copy()
+            logits_for_hits_k_remove_stopwords = logits_remove_stopwords.copy()
+            logits_for_hits_k_gold_objs = logits_gold_objs.copy()
+            logits_for_hits_k_gold_objs_relation_wise = logits_gold_objs_relation_wise.copy()
+
+            logits_for_hits_k[subj_rel_pair_gold_obj_mask] = -10000.
+            logits_for_hits_k_remove_stopwords[subj_rel_pair_gold_obj_mask] = -10000.
+            logits_for_hits_k_gold_objs[subj_rel_pair_gold_obj_mask] = -10000.
+            logits_for_hits_k_gold_objs_relation_wise[subj_rel_pair_gold_obj_mask] = -10000.
+
+            ### Compute the results (top 100 predictions, MRR, hits@1)
+            postprocessed_results = postprocess_single_prediction(logits, logits_for_hits_k, probs, tokenizer, label_id)
+            postprocessed_results_remove_stopwords = postprocess_single_prediction(logits_remove_stopwords, logits_for_hits_k_remove_stopwords, probs, tokenizer, label_id)
+            postprocessed_results_gold_objs = postprocess_single_prediction(logits_gold_objs, logits_for_hits_k_gold_objs, probs, tokenizer, label_id)
+            postprocessed_results_gold_objs_relation_wise = postprocess_single_prediction(logits_gold_objs_relation_wise, logits_for_hits_k_gold_objs_relation_wise, probs, tokenizer, label_id)
+
+            postprocessed_results_aggregated = {
+                "uid": example["uid"],
+                "label_text": label_text,
+            }
+
+            for key in postprocessed_results:
+                postprocessed_results_aggregated[key] = postprocessed_results[key]
+            for key in postprocessed_results_remove_stopwords:
+                postprocessed_results_aggregated[f"{key}_remove_stopwords"] = postprocessed_results_remove_stopwords[key]
+            for key in postprocessed_results_gold_objs:
+                postprocessed_results_aggregated[f"{key}_gold_objs"] = postprocessed_results_gold_objs[key]
+            for key in postprocessed_results_gold_objs_relation_wise:
+                postprocessed_results_aggregated[f"{key}_gold_objs_relation_wise"] = postprocessed_results_gold_objs_relation_wise[key]
+        
+            json.dump(postprocessed_results_aggregated, fout)
             fout.write('\n')
