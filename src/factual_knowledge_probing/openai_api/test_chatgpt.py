@@ -97,8 +97,15 @@ for i in tqdm(range(0, len(prompts), batch_size)):
 
     # for uid, response in zip(uid_batch, responses.choices):
     #     raw_predictions.append({"uid": uid, "response": response})
-    for uid, response_remove_stopwords in zip(uid_batch, responses_remove_stopwords.choices):
-        raw_predictions_remove_stopwords.append({"uid": uid, "response": response_remove_stopwords})
+    # for uid, response_remove_stopwords in zip(uid_batch, responses_remove_stopwords.choices):
+    #     raw_predictions_remove_stopwords.append({"uid": uid, "response": response_remove_stopwords})
+    uid = uid_batch[0]
+    logprobs_remove_stopwords = responses_remove_stopwords.choices[0].logprobs.content[0].top_logprobs
+    top_5_tokens_remove_stopwords, top_5_logprobs_remove_stopwords = [], []
+    for logprob in logprobs_remove_stopwords:
+        top_5_tokens_remove_stopwords.append(logprob.token)
+        top_5_logprobs_remove_stopwords.append(logprob.logprob)
+    raw_predictions_remove_stopwords.append({"uid": uid, "top_5_tokens_remove_stopwords": top_5_tokens_remove_stopwords, "top_5_logprobs_remove_stopwords": top_5_logprobs_remove_stopwords})
 
 # Write the results
 out_path = os.path.join('results', args.target_model)
