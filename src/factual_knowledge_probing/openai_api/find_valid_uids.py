@@ -34,7 +34,7 @@ for example in tqdm(data):
     else:
         count2 += 1
 
-print(count, count2)
+print(count, 'examples are valid among', count+count2, 'samples')
 
 file_directory = os.path.dirname(__file__)
 out_dir = os.path.join(file_directory, args.dataset_name)

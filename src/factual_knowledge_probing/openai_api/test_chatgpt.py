@@ -1,6 +1,6 @@
 import os
 import argparse
-import openai
+from openai import OpenAI
 import tiktoken
 
 import json
@@ -15,8 +15,12 @@ parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
 parser.add_argument('--dataset_type', type=str, default='test')
 args = parser.parse_args()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(
+    # This is the default and can be omitted
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
 
+# Make a list of stopwords to remove them in the output vocabulary
 encoding = tiktoken.encoding_for_model(args.target_model)
 
 stopword_list = stopwords.words("english")
@@ -25,6 +29,7 @@ for stopword in stopword_list:
     token_ids = encoding.encode(' '+stopword)
     if len(token_ids) == 1:
         stopword_ids.append(token_ids[0])
+
     token_ids = encoding.encode(stopword)
     if len(token_ids) == 1:
         stopword_ids.append(token_ids[0])
@@ -33,23 +38,30 @@ logit_bias_remove_stopwords = {}
 for stopword_id in stopword_ids:
     logit_bias_remove_stopwords[str(stopword_id)] = -100
 
+# Load test data
 with open(f'data/{args.dataset_name}/{args.dataset_type}.json') as fin:
     test_data = json.load(fin)
 
+# Load valid example ids
+with open(f'src/factual_knowledge_probing/openai_api/{args.dataset_name}/valid_uids.json', 'r') as fin:
+    valid_uids = json.load(fin)
+
+# Filter out invalid examples (whose answers are not in the ChatGPT's vocabulary)
 uids = []
 prompts = []
 
 for example in tqdm(test_data):
     uid = example['uid']
     prompt = example['truncated_input']
+    if uid in valid_uids:
+        uids.append(uid)
+        prompts.append(prompt)
 
-    uids.append(uid)
-    prompts.append(prompt)
-
+# Run completions with API and store the results
 raw_predictions = []
 raw_predictions_remove_stopwords = []
 
-batch_size = 1
+batch_size = 1 # chatgpt does not support batched completion for now
 for i in tqdm(range(0, len(prompts), batch_size)):
     uid_batch = uids[i:i+batch_size]
     prompt_batch = prompts[i:i+batch_size]
@@ -59,37 +71,41 @@ for i in tqdm(range(0, len(prompts), batch_size)):
 
     while True:
         try:
-            responses = openai.ChatCompletion.create(
-				model=args.target_model,
-				messages=messages,
-				max_tokens=1,
-				temperature=0,
-			)
+            # responses = client.chat.completions.create(
+			# 	model=args.target_model,
+			# 	messages=messages,
+			# 	max_tokens=1,
+			# 	temperature=0,
+            #     logprobs=True,
+            #     top_logprobs=5,
+			# )
 
-            responses_remove_stopwords = openai.ChatCompletion.create(
+            responses_remove_stopwords = client.chat.completions.create(
 				model=args.target_model,
 				messages=messages,
 				max_tokens=1,
 				temperature=0,
 				logit_bias=logit_bias_remove_stopwords,
+                logprobs=True,
+                top_logprobs=5,
 			)
-
+            
             break
         except Exception as e:
             print(e)
             time.sleep(3)
 
-    for uid, response in zip(uid_batch, responses.choices):
-        raw_predictions.append({"uid": uid, "response": response})
+    # for uid, response in zip(uid_batch, responses.choices):
+    #     raw_predictions.append({"uid": uid, "response": response})
     for uid, response_remove_stopwords in zip(uid_batch, responses_remove_stopwords.choices):
         raw_predictions_remove_stopwords.append({"uid": uid, "response": response_remove_stopwords})
 
-
+# Write the results
 out_path = os.path.join('results', args.target_model)
 os.makedirs(out_path, exist_ok=True)
 
-with open(os.path.join(out_path, f'raw_pred_{args.dataset_name}_{args.dataset_type}.json'), 'w') as fout:
-    json.dump(raw_predictions, fout)
+# with open(os.path.join(out_path, f'raw_pred_{args.dataset_name}_{args.dataset_type}.json'), 'w') as fout:
+#     json.dump(raw_predictions, fout)
 
 with open(os.path.join(out_path, f'raw_pred_{args.dataset_name}_{args.dataset_type}_remove_stopwords.json'), 'w') as fout:
     json.dump(raw_predictions_remove_stopwords, fout)
