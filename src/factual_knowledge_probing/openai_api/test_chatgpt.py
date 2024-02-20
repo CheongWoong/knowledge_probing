@@ -24,10 +24,11 @@ client = OpenAI(
 encoding = tiktoken.encoding_for_model(args.target_model)
 
 stopword_list = stopwords.words("english")
-capitalized_stopword_list = []
-for word in stopword_list:
-    capitalized_stopword_list.append(word.capitalize())
-stopword_list = stopword_list + capitalized_stopword_list
+# capitalized_stopword_list = []
+# for word in stopword_list:
+#     capitalized_stopword_list.append(word.capitalize())
+# stopword_list = stopword_list + capitalized_stopword_list
+stopword_list.append('The') # cwkang: we only add 'The' due to the maximum number limit of logit_bias in OpenAI API
 
 stopword_ids = []
 for stopword in stopword_list:
@@ -96,7 +97,7 @@ for i in tqdm(range(0, len(prompts), batch_size)):
             
             break
         except Exception as e:
-            print(e)
+            print('Error!', e)
             time.sleep(3)
 
     # for uid, response in zip(uid_batch, responses.choices):
