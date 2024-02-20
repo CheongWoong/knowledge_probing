@@ -67,5 +67,7 @@ for raw_pred_remove_stopwords in tqdm(raw_preds_remove_stopwords):
     }
     predictions.append(prediction)
 
-with open(os.path.join(args.file_path, f'pred_{args.dataset_name}_{args.dataset_type}.json'), 'w') as fout:
-    json.dump(predictions, fout)
+with open(os.path.join(args.file_path, f'pred_{args.dataset_name}_{args.dataset_type}.jsonl'), 'w') as fout:
+    for prediction in predictions:
+        json.dump(prediction, fout)
+        fout.write('\n')
