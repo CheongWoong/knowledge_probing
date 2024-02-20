@@ -24,12 +24,16 @@ client = OpenAI(
 encoding = tiktoken.encoding_for_model(args.target_model)
 
 stopword_list = stopwords.words("english")
+capitalized_stopword_list = []
+for word in stopword_list:
+    capitalized_stopword_list.append(word.capitalize())
+stopword_list = stopword_list + capitalized_stopword_list
+
 stopword_ids = []
 for stopword in stopword_list:
     token_ids = encoding.encode(' '+stopword)
     if len(token_ids) == 1:
         stopword_ids.append(token_ids[0])
-
     token_ids = encoding.encode(stopword)
     if len(token_ids) == 1:
         stopword_ids.append(token_ids[0])

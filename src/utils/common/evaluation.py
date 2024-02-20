@@ -38,9 +38,17 @@ def preprocess_logits_for_metrics(logits, labels, tokenizer=None):
 def get_masks(tokenizer, f_all):
     # generate the stopword mask to restrict candidate sets by removing stopwords.
     stopword_list = stopwords.words("english")
+    capitalized_stopword_list = []
+    for word in stopword_list:
+        capitalized_stopword_list.append(word.capitalize())
+    stopword_list = stopword_list + capitalized_stopword_list
+
     stopword_ids = []
     for stopword in stopword_list:
         token_ids = tokenizer.encode(' '+stopword, add_special_tokens=False)
+        if len(token_ids) == 1:
+            stopword_ids.append(token_ids[0])
+        token_ids = tokenizer.encode(stopword, add_special_tokens=False)
         if len(token_ids) == 1:
             stopword_ids.append(token_ids[0])
     stopword_mask = torch.tensor(stopword_ids, dtype=torch.int32)
