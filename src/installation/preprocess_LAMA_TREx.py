@@ -3,6 +3,7 @@ import jsonlines
 import json
 import os
 import argparse
+from nltk.corpus import stopwords
 
 from sklearn.model_selection import train_test_split
 
@@ -22,6 +23,12 @@ if __name__ == '__main__':
                  ])
     args = parser.parse_args()
 
+    stopword_list = stopwords.words('english')
+    capitalized_stopword_list = []
+    for word in stopword_list:
+        capitalized_stopword_list.append(word.capitalize())
+    stopword_list = stopword_list + capitalized_stopword_list
+
     tokenizers = []
     for model_name in args.model_names:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -38,6 +45,7 @@ if __name__ == '__main__':
         data_paths[i] = os.path.join(trex_path, data_paths[i])
 
     prompts = []
+    is_valids = {}
     for data_path in data_paths:
         with jsonlines.open(data_path) as fin:
             for idx, sample in tqdm(enumerate(fin.iter())):
@@ -46,13 +54,20 @@ if __name__ == '__main__':
                 obj = sample['obj_label'].strip()
                 rel_id = sample['predicate_id']
 
-                is_valid = True
-                for tokenizer in tokenizers:
-                    input_ids = tokenizer.encode(' '+obj, add_special_tokens=False)
-                    if len(input_ids) != 1:
-                        is_valid = False
-                        break
-                
+                if obj in stopword_list:
+                    continue
+
+                if obj not in is_valids:
+                    is_valid = True
+                    for tokenizer in tokenizers:
+                        input_ids = tokenizer.encode(' '+obj, add_special_tokens=False)
+                        if len(input_ids) != 1:
+                            is_valid = False
+                            break
+                    is_valids[obj] = is_valid
+                else:
+                    is_valid = is_valids[obj]
+
                 if not is_valid:
                     continue
 
