@@ -4,6 +4,7 @@ import json
 import argparse
 from copy import deepcopy
 from collections import defaultdict
+from nltk.corpus import stopwords
 
 from tqdm.auto import tqdm
 
@@ -13,6 +14,8 @@ parser.add_argument('--file_path', type=str)
 parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
 parser.add_argument('--dataset_type', type=str, default='test')
 args = parser.parse_args()
+
+stopword_list = stopwords.words('english')
 
 with open(f'data/{args.dataset_name}/all.json') as fin:
     data = json.load(fin)
@@ -52,6 +55,8 @@ for raw_pred_remove_stopwords in tqdm(raw_preds_remove_stopwords):
     for text in top_5_tokens_remove_stopwords:
         pred_remove_stopwords = text.strip().lower()
         if pred_remove_stopwords in subj_rel_gold_objs:
+            continue
+        elif pred_remove_stopwords in stopword_list: # cwkang: to handle capitalized stopwords in the output
             continue
         else:
             break
