@@ -17,8 +17,8 @@ python -m "src.factual_knowledge_probing.run_"$model_type \
     --gradient_accumulation_steps 1 \
     --gradient_checkpointing True \
     --fp16 True \
-    --learning_rate 2e-5 \
-    --num_train_epochs 30 \
+    --learning_rate 3e-4 \
+    --num_train_epochs 10 \
     --block_size 128 \
     --save_strategy no \
     --seed 0 \

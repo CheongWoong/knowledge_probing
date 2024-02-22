@@ -56,7 +56,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
-from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderConfig ## cwkang: add peft modules
+from peft import get_peft_model, PeftModel, PeftConfig, TaskType, PromptEncoderConfig, LoraConfig ## cwkang: add peft modules
 
 ##### cwkang: load additional packages and define global variables
 from functools import partial
@@ -108,6 +108,7 @@ def main():
     custom_parser = argparse.ArgumentParser()
     custom_parser.add_argument('--truncated_prompt', type=str2bool, default=False)
     custom_parser.add_argument('--prompt_tuning', type=str2bool, default=False)
+    custom_parser.add_argument('--lora', type=str2bool, default=False)
     custom_args = custom_parser.parse_args(remaining_args)
     #####
 
@@ -244,10 +245,10 @@ def main():
     # download model & vocab.
             
     ## cw: Load peft model for inference
-    if custom_args.prompt_tuning:
+    if custom_args.prompt_tuning or custom_args.lora:
         if not training_args.do_train:
             peft_model_id = model_args.model_name_or_path
-            config = PeftConfig.from_pretrained(peft_model_id)
+            config = PeftConfig.from_pretrained(peft_model_id, inference_mode=True)
             model_args.model_name_or_path = config.base_model_name_or_path
 
     config_kwargs = {
@@ -328,6 +329,13 @@ def main():
     if custom_args.prompt_tuning:
         if training_args.do_train:
             peft_config = PromptEncoderConfig(task_type=TaskType.CAUSAL_LM, num_virtual_tokens=8, encoder_hidden_size=128)
+            model = get_peft_model(model, peft_config)
+            print(model.print_trainable_parameters())
+        else:
+            model = PeftModel.from_pretrained(model, peft_model_id)
+    elif custom_args.lora:
+        if training_args.do_train:
+            peft_config = LoraConfig(task_type=TaskType.CAUSAL_LM, r=16, lora_alpha=16, target_modules=["query", "value"], lora_dropout=0.1, bias="none")
             model = get_peft_model(model, peft_config)
             print(model.print_trainable_parameters())
         else:
