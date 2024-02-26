@@ -27,7 +27,7 @@ if __name__ == '__main__':
         all_counts[sample['rel_id']] += 1
         all_counts['all'] += 1
 
-    sorted_keys = sorted(list(all_counts.keys()), key=lambda x: int(x[1:]) if x[1:].isdigit() else 10000)
+    sorted_keys = sorted(list(all_counts.keys()), key=lambda x: int(x[1:]) if x[1:].isdigit() else x)
 
     print("\tTrain / %5s / %5s" % ('Test', 'All'))
     for key in sorted_keys:
