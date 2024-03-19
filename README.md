@@ -1,5 +1,5 @@
-# Factual Knowledge Probing with Large Language Models
-This is a repository for factual knowledge probing for large language models, including both autoregressive and masked models.  
+# Knowledge Probing with Large Language Models
+This is a repository for knowledge probing for large language models, including both autoregressive and masked models.  
 Refer to [v1.0](https://github.com/CheongWoong/factual_knowledge_probing/tree/v1.0) for the original version used for the experiments in the EMNLP 2023 Findings paper "[Impact of Co-occurrence on Factual Knowledge of Large Language Models](https://aclanthology.org/2023.findings-emnlp.518.pdf)". However, we recommend using the latest version.
 
 
