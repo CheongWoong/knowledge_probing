@@ -67,7 +67,7 @@ def preprocess(
     if not is_training:
         labels = deepcopy(input_ids)
     else:
-        labels = [s.replace('[MASK]', t) for s, t in zip(sources, targets)]
+        labels = [s.replace(tokenizer.mask_token, t) for s, t in zip(sources, targets)]
         labels_tokenized = tokenize_fn(labels, tokenizer, block_size)
         labels = labels_tokenized["input_ids"]
         for input_id, label in zip(input_ids, labels):
