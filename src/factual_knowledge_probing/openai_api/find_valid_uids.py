@@ -10,8 +10,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
 args = parser.parse_args()
 
-# target_model = 'text-davinci-003'
-# encoding = tiktoken.encoding_for_model(target_model)
+target_model = 'gpt-4o'
+encoding = tiktoken.encoding_for_model(target_model)
 target_model2 = 'gpt-3.5-turbo'
 encoding2 = tiktoken.encoding_for_model(target_model2)
 
@@ -27,8 +27,9 @@ for example in tqdm(data):
     prompt = example['truncated_input']
     obj = example['output']
 
-    token_ids = encoding2.encode(obj)
-    if len(token_ids) == 1:
+    token_ids = encoding.encode(obj)
+    token_ids2 = encoding2.encode(obj)
+    if len(token_ids) == 1 and len(token_ids2) == 1:
         valid_uids.append(uid)
         count += 1
     else:

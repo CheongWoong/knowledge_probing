@@ -42,33 +42,39 @@ predictions = []
 for raw_pred_remove_stopwords in tqdm(raw_preds_remove_stopwords):
     uid = raw_pred_remove_stopwords['uid']
 
-    top_5_tokens_remove_stopwords = raw_pred_remove_stopwords['top_5_tokens_remove_stopwords']
-    top_5_logprobs_remove_stopwords = raw_pred_remove_stopwords['top_5_logprobs_remove_stopwords']
-    top_5_probs_remove_stopwords = []
-    for logprob in top_5_logprobs_remove_stopwords:
-        top_5_probs_remove_stopwords.append(math.exp(logprob))
+    top_k_tokens_remove_stopwords = raw_pred_remove_stopwords['top_k_tokens_remove_stopwords']
+    top_k_logprobs_remove_stopwords = raw_pred_remove_stopwords['top_k_logprobs_remove_stopwords']
+    top_k_probs_remove_stopwords = []
+    for logprob in top_k_logprobs_remove_stopwords:
+        top_k_probs_remove_stopwords.append(math.exp(logprob))
 
     label_text = label_map[uid].strip().lower()
     subj_rel = subj_rel_map[uid]
     subj_rel_gold_objs = deepcopy(subj_rel_pair_gold_objs[subj_rel])
     subj_rel_gold_objs.remove(label_text)
-    for text in top_5_tokens_remove_stopwords:
+    preds_remove_stopwords = []
+    for text in top_k_tokens_remove_stopwords:
         pred_remove_stopwords = text.strip().lower()
         if pred_remove_stopwords in subj_rel_gold_objs:
             continue
-        elif pred_remove_stopwords in stopword_list: # cwkang: to handle capitalized stopwords in the output
+        elif pred_remove_stopwords in stopword_list: # cwkang: to handle stopwords in the output
             continue
         else:
-            break
-    hits_1_remove_stopwords = (pred_remove_stopwords == label_text)*1.0
+            preds_remove_stopwords.append(pred_remove_stopwords)
+    hits_1_remove_stopwords = (preds_remove_stopwords[0] == label_text)*1.0
+    hits_10_remove_stopwords = 0.0
+    for pred in preds_remove_stopwords[:10]:
+        if pred == label_text:
+            hits_10_remove_stopwords = 1.0
 
     prediction = {
         'uid': uid,
         'label_text': label_text,
-        'top_5_text_remove_stopwords': top_5_tokens_remove_stopwords,
-        'top_5_logprobs_remove_stopwords': top_5_logprobs_remove_stopwords,
-        'top_5_probs_remove_stopwords': top_5_probs_remove_stopwords,
+        'top_k_text_remove_stopwords': top_k_tokens_remove_stopwords,
+        'top_k_logprobs_remove_stopwords': top_k_logprobs_remove_stopwords,
+        'top_k_probs_remove_stopwords': top_k_probs_remove_stopwords,
         'hits@1_remove_stopwords': hits_1_remove_stopwords,
+        'hits@10_remove_stopwords': hits_10_remove_stopwords,
     }
     predictions.append(prediction)
 

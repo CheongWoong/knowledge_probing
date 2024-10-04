@@ -34,7 +34,10 @@ mrr_relation_wise, mrr_relation_wise_remove_stopwords, mrr_relation_wise_gold_ob
 with jsonlines.open(args.pred_file) as fin:
     for pred in tqdm(fin.iter()):
         uid = pred['uid']
-        rel_id = uid_rel_map[uid]
+        if uid in uid_rel_map:
+            rel_id = uid_rel_map[uid]
+        else:
+            continue
 
         hits_1 = pred.get('hits@1', 0)
         hits_1_remove_stopwords = pred.get('hits@1_remove_stopwords', 0)

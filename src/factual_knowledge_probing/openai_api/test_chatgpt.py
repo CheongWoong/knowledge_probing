@@ -10,7 +10,7 @@ from nltk.corpus import stopwords
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--target_model', type=str, default='gpt-3.5-turbo-0301')
+parser.add_argument('--target_model', type=str, default='gpt-3.5-turbo-0125')
 parser.add_argument('--dataset_name', type=str, default='LAMA_TREx')
 parser.add_argument('--dataset_type', type=str, default='test')
 args = parser.parse_args()
@@ -24,20 +24,23 @@ client = OpenAI(
 encoding = tiktoken.encoding_for_model(args.target_model)
 
 stopword_list = stopwords.words("english")
-# capitalized_stopword_list = []
-# for word in stopword_list:
-#     capitalized_stopword_list.append(word.capitalize())
-# stopword_list = stopword_list + capitalized_stopword_list
-stopword_list.append('The') # cwkang: we only add 'The' due to the maximum number limit of logit_bias in OpenAI API
+capitalized_stopword_list = []
+for word in stopword_list:
+    capitalized_stopword_list.append(word.capitalize())
+stopword_list = stopword_list + capitalized_stopword_list
+stopword_list = capitalized_stopword_list
+# # cwkang: we only add articles for capitalized stopwords due to the maximum number limit of logit_bias in OpenAI API
+# stopword_list.append('A')
+# stopword_list.append('An')
+# stopword_list.append('The')
 
 stopword_ids = []
 for stopword in stopword_list:
-    token_ids = encoding.encode(' '+stopword)
-    if len(token_ids) == 1:
-        stopword_ids.append(token_ids[0])
-    token_ids = encoding.encode(stopword)
-    if len(token_ids) == 1:
-        stopword_ids.append(token_ids[0])
+    for word in [stopword, ' '+stopword]:
+        token_ids = encoding.encode(word)
+        if len(token_ids) == 1:
+            stopword_ids.append(token_ids[0])
+stopword_ids = stopword_ids
 
 logit_bias_remove_stopwords = {}
 for stopword_id in stopword_ids:
@@ -82,7 +85,7 @@ for i in tqdm(range(0, len(prompts), batch_size)):
 			# 	max_tokens=1,
 			# 	temperature=0,
             #     logprobs=True,
-            #     top_logprobs=5,
+            #     top_logprobs=20,
 			# )
 
             responses_remove_stopwords = client.chat.completions.create(
@@ -92,7 +95,7 @@ for i in tqdm(range(0, len(prompts), batch_size)):
 				temperature=0,
 				logit_bias=logit_bias_remove_stopwords,
                 logprobs=True,
-                top_logprobs=5,
+                top_logprobs=20,
 			)
             
             break
@@ -106,11 +109,11 @@ for i in tqdm(range(0, len(prompts), batch_size)):
     #     raw_predictions_remove_stopwords.append({"uid": uid, "response": response_remove_stopwords})
     uid = uid_batch[0]
     logprobs_remove_stopwords = responses_remove_stopwords.choices[0].logprobs.content[0].top_logprobs
-    top_5_tokens_remove_stopwords, top_5_logprobs_remove_stopwords = [], []
+    top_k_tokens_remove_stopwords, top_k_logprobs_remove_stopwords = [], []
     for logprob in logprobs_remove_stopwords:
-        top_5_tokens_remove_stopwords.append(logprob.token)
-        top_5_logprobs_remove_stopwords.append(logprob.logprob)
-    raw_predictions_remove_stopwords.append({"uid": uid, "top_5_tokens_remove_stopwords": top_5_tokens_remove_stopwords, "top_5_logprobs_remove_stopwords": top_5_logprobs_remove_stopwords})
+        top_k_tokens_remove_stopwords.append(logprob.token)
+        top_k_logprobs_remove_stopwords.append(logprob.logprob)
+    raw_predictions_remove_stopwords.append({"uid": uid, "top_k_tokens_remove_stopwords": top_k_tokens_remove_stopwords, "top_k_logprobs_remove_stopwords": top_k_logprobs_remove_stopwords})
 
 # Write the results
 out_path = os.path.join('results', args.target_model)

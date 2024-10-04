@@ -20,6 +20,7 @@ if __name__ == '__main__':
                  'roberta-base', 'roberta-large',
                  'albert-base-v1', 'albert-large-v1', 'albert-xlarge-v1',
                  'albert-base-v2', 'albert-large-v2', 'albert-xlarge-v2',
+                 'meta-llama/Meta-Llama-3-8B', 'meta-llama/Meta-Llama-3-8B-Instruct',
                  ])
     args = parser.parse_args()
 
